@@ -1,0 +1,7 @@
+{
+  "name": "VnExpress Product 2026",
+  "description": "Hệ thống quản lý dự án chuyên nghiệp cho phòng Sản phẩm VnExpress năm 2026, tích hợp phân tích dữ liệu và AI trợ lý.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
