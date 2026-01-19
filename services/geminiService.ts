@@ -6,17 +6,20 @@ export const analyzeProjects = async (projects: Project[], query: string): Promi
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const projectSummary = projects.map(p => 
-    `- ${p.description} (Mã: ${p.code}): Trạng thái ${p.status}, PM: ${p.pm}, Designer: ${p.designer}, Release: ${p.releaseDate}`
+    `- ${p.description} (Mã: ${p.code}): Trạng thái ${p.status}, PM: ${p.pm}, Designer: ${p.designer}, Release: ${p.releaseDate}, KPI: ${p.kpi || 'Chưa có'}`
   ).join('\n');
 
   const systemPrompt = `
     Bạn là Trợ lý AI chuyên nghiệp của Trưởng phòng Sản phẩm & Công nghệ VnExpress.
-    Dưới đây là danh sách dự án năm 2026:
+    Dữ liệu dưới đây được lấy trực tiếp từ hệ thống Google Sheets theo thời gian thực (Live Data):
+    
     ${projectSummary}
     
-    Hãy trả lời các câu hỏi về tài nguyên, tiến độ, hoặc phân tích rủi ro dựa trên dữ liệu này.
-    Nếu có sự chồng chéo nhân sự (ví dụ một người làm quá nhiều dự án cùng lúc), hãy cảnh báo.
-    Hãy trả lời bằng tiếng Việt, súc tích, chuyên nghiệp.
+    Nhiệm vụ của bạn:
+    1. Trả lời chính xác dựa trên danh sách trên. Nếu dự án không có trong danh sách, hãy nói rõ là chưa tìm thấy trong dữ liệu hiện tại.
+    2. Phân tích rủi ro về tiến độ hoặc quá tải nhân sự (ví dụ: một PM/Designer ôm quá nhiều việc trong cùng một quý).
+    3. Đưa ra gợi ý ngắn gọn, súc tích, phong cách quản lý cấp cao (Executive Summary).
+    4. Trả lời bằng tiếng Việt chuyên ngành Product Management.
   `;
 
   try {
@@ -25,7 +28,7 @@ export const analyzeProjects = async (projects: Project[], query: string): Promi
       contents: query,
       config: {
         systemInstruction: systemPrompt,
-        temperature: 0.7,
+        temperature: 0.5,
       },
     });
     return response.text || "Xin lỗi, tôi không thể xử lý yêu cầu lúc này.";
