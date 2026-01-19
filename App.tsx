@@ -59,7 +59,6 @@ const App: React.FC = () => {
       'Hand-Off': ProjectStatus.HAND_OFF,
       'Planning': ProjectStatus.PLANNING,
     };
-    // Default fallback if status is empty but row exists
     return map[s] || (s ? ProjectStatus.PLANNING : ProjectStatus.NOT_STARTED);
   };
 
@@ -94,60 +93,69 @@ const App: React.FC = () => {
       }
 
       const tsvText = await response.text();
+      
+      // Check if response is actually HTML (Google Sheets sometimes returns HTML on error)
+      if (tsvText.trim().startsWith('<!DOCTYPE html') || tsvText.includes('<html')) {
+        throw new Error("Received HTML instead of TSV");
+      }
+
       const rows = tsvText.split('\n').map(row => row.split('\t'));
 
-      // Skip the first 2 rows (Header rows) and map data
-      // Col Mapping based on screenshot:
-      // A[0]: No (Index)
-      // B[1]: Type
-      // C[2]: Description
-      // D[3]: Phase
-      // E[4]: Folder (Dept)
-      // F[5]: Request (PO)
-      // G[6]: Tech Hand-off
-      // I[8]: Release Date
-      // K[10]: Quarter
-      // L[11]: Product (PM)
-      // M[12]: UX/UI (Designer)
-      // N[13]: Status
-
-      const parsedProjects: Project[] = rows.slice(2)
+      // Filter and Map
+      const parsedProjects: Project[] = rows
         .filter(r => {
-           // Filter: Must have a numeric index in Col A (to exclude category rows like the dark green ones or empty rows)
-           // And must have a description
-           const hasIndex = /^\d+$/.test((r[0] || '').trim());
-           const hasDesc = r[2] && r[2].trim() !== '';
-           return hasIndex && hasDesc;
+           // Improved Filter:
+           // 1. Must have enough columns (at least 3: No, Type, Desc)
+           if (r.length < 3) return false;
+           
+           // 2. Column A (Index) must be a number. 
+           // We use this to distinguish data rows from headers or category rows.
+           const colA = (r[0] || '').trim();
+           if (!colA || isNaN(Number(colA))) return false;
+
+           // 3. Must have a description
+           const desc = (r[2] || '').trim();
+           return desc.length > 0;
         })
         .map((row, idx) => {
-          const indexNum = (row[0] || '').trim();
-          const typeStr = (row[1] || '').trim();
-          const description = (row[2] || '').trim();
-          const phase = (row[3] || '').trim();
-          const department = (row[4] || '').trim();
-          const requestOwner = (row[5] || '').trim(); // Mapping "Request" to PO/Requester
-          const techHandoff = (row[6] || '').trim();
-          const releaseDate = (row[8] || '').trim();
-          const quarterStr = (row[10] || '').trim();
-          const pm = (row[11] || '').trim();
-          const designer = (row[12] || '').trim();
-          const statusStr = (row[13] || '').trim();
+          // Safe access to columns
+          const getCol = (i: number) => (row[i] || '').trim();
+
+          const indexNum = getCol(0);
+          const typeStr = getCol(1);
+          const description = getCol(2);
+          const phase = getCol(3);
+          const department = getCol(4);
+          const requestOwner = getCol(5);
+          const techHandoff = getCol(6);
+          // Col 7 is empty/padding
+          const releaseDate = getCol(8);
+          // Col 9 is empty/padding
+          const quarterStr = getCol(10);
+          const pm = getCol(11);
+          const designer = getCol(12);
+          const statusStr = getCol(13);
           
           let year = 2026;
-          // Determine year based on date strings or quarter
-          if (releaseDate.includes('2025') || releaseDate.endsWith('/25') || 
-              techHandoff.includes('2025') || techHandoff.endsWith('/25') ||
-              quarterStr.startsWith('25')) {
-            year = 2025;
+          // Improved Year Detection
+          const dateStr = (releaseDate + techHandoff + quarterStr).toUpperCase();
+          
+          if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.startsWith('25')) {
+             year = 2025;
+          } else if (dateStr.includes('/26') || dateStr.includes('2026') || quarterStr.startsWith('26')) {
+             year = 2026;
+          } else {
+             // Fallback logic
+             year = 2026; 
           }
           
           return {
             id: `p-${indexNum}-${idx}`,
-            code: indexNum, // Using 'No' as code/id reference
+            code: indexNum,
             year,
             description,
             type: normalizeType(typeStr),
-            department,
+            department: department || 'General',
             status: normalizeStatus(statusStr),
             phase,
             quarter: parseQuarter(quarterStr),
@@ -156,25 +164,36 @@ const App: React.FC = () => {
             pm,
             designer,
             po: requestOwner,
-            kpi: '', // Not in sheet
-            dashboardUrl: '', // Not in sheet
-            notes: '' // Not in sheet
+            kpi: '', 
+            dashboardUrl: '',
+            notes: ''
           };
         });
 
-      setProjects(parsedProjects);
-      
-      const now = new Date();
-      setLastUpdated(now);
-
-      localStorage.setItem(CACHE_KEY_PROJECTS, JSON.stringify(parsedProjects));
-      localStorage.setItem(CACHE_KEY_LAST_UPDATED, now.toISOString());
+      if (parsedProjects.length > 0) {
+        setProjects(parsedProjects);
+        const now = new Date();
+        setLastUpdated(now);
+        localStorage.setItem(CACHE_KEY_PROJECTS, JSON.stringify(parsedProjects));
+        localStorage.setItem(CACHE_KEY_LAST_UPDATED, now.toISOString());
+      } else {
+        console.warn("Parsed 0 projects. Format might have changed.");
+        // If we really find nothing, keep existing or fallback if empty
+        if (projects.length === 0) {
+             const cached = localStorage.getItem(CACHE_KEY_PROJECTS);
+             if (cached) setProjects(JSON.parse(cached));
+             else setProjects(MOCK_PROJECTS); // Last resort
+        }
+      }
 
     } catch (error) {
       console.error("Data sync error:", error);
+      // Fallback on error
       if (projects.length === 0) {
           const cachedProjects = localStorage.getItem(CACHE_KEY_PROJECTS);
-          if (!cachedProjects) {
+          if (cachedProjects) {
+              setProjects(JSON.parse(cachedProjects));
+          } else {
               setProjects(MOCK_PROJECTS);
           }
       }
@@ -185,20 +204,16 @@ const App: React.FC = () => {
   }, [projects.length]);
 
   useEffect(() => {
-    const cachedProjects = localStorage.getItem(CACHE_KEY_PROJECTS);
-    const cachedTime = localStorage.getItem(CACHE_KEY_LAST_UPDATED);
-
-    if (cachedProjects) setProjects(JSON.parse(cachedProjects));
-    if (cachedTime) setLastUpdated(new Date(cachedTime));
-
+    // Initial Load
     fetchData();
 
+    // Auto Refresh
     const timer = setInterval(() => {
       fetchData(true);
     }, REFRESH_INTERVAL);
 
     return () => clearInterval(timer);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredProjects = useMemo(() => {
     return projects.filter(p => p.year === selectedYear && (
