@@ -130,14 +130,21 @@ const App: React.FC = () => {
              const c = cell.toLowerCase().trim();
              if (c.includes('stt') || c === 'no' || c === '#') colMap['code'] = idx;
              if (c.includes('loại') || c.includes('type')) colMap['type'] = idx;
-             if (c.includes('tên') || c.includes('project') || c.includes('mô tả') || c.includes('description') || c.includes('issue')) colMap['description'] = idx;
+             
+             // Description Mapping
+             if (c.includes('issue') || c.includes('description') || c === 'mô tả' || c === 'project name') colMap['description'] = idx;
+             else if (!colMap['description'] && c.includes('tên dự án')) colMap['description'] = idx;
+             
              if (c.includes('giai đoạn') || c.includes('phase')) colMap['phase'] = idx;
              if (c.includes('bộ phận') || c.includes('dept') || c.includes('folder')) colMap['department'] = idx;
              if (c.includes('yêu cầu') || c.includes('owner') || c.includes('request')) colMap['po'] = idx;
              if (c.includes('tech') || c.includes('handoff')) colMap['techHandoff'] = idx;
              if (c.includes('release') || c.includes('golive') || c.includes('ngày') || c.includes('date')) colMap['releaseDate'] = idx;
              if (c.includes('quý') || c.includes('quarter')) colMap['quarter'] = idx;
-             if (c.includes('pm') || c.includes('product manager')) colMap['pm'] = idx;
+             
+             // PM Mapping - Includes 'product' as per user request
+             if (c === 'product' || c === 'pm' || c.includes('product manager') || c.includes('quản trị')) colMap['pm'] = idx;
+             
              if (c.includes('designer') || c.includes('ui') || c.includes('ux')) colMap['designer'] = idx;
              if (c.includes('trạng thái') || c.includes('status')) colMap['status'] = idx;
              if (c.includes('kpi') || c.includes('okr')) colMap['kpi'] = idx;
@@ -157,9 +164,10 @@ const App: React.FC = () => {
         colMap['techHandoff'] = 6;
         colMap['releaseDate'] = 8;
         colMap['quarter'] = 10;
-        colMap['pm'] = 11;
-        colMap['designer'] = 12;
-        colMap['status'] = 13;
+        // Fallback adjustments based on Col M = PM
+        colMap['pm'] = 12; // Column M
+        colMap['designer'] = 13; // Column N
+        colMap['status'] = 14; // Column O
         headerRowIndex = 0; // Assume first row is header or data starts shortly after
       }
 
