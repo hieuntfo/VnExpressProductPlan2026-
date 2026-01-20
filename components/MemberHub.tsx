@@ -58,7 +58,7 @@ const MemberHub: React.FC<MemberHubProps> = ({ projects }) => {
           <div 
             key={member.name} 
             onClick={() => setSelectedMember(member.name)}
-            className="bg-[#1e293b]/70 backdrop-blur-xl p-6 rounded-3xl shadow-lg border border-slate-700/50 hover:border-[#9f224e] hover:bg-[#1e293b] hover:shadow-[0_0_20px_rgba(159,34,78,0.2)] transition-all group cursor-pointer active:scale-95 transform hover:-translate-y-1"
+            className="bg-[#1e293b]/50 backdrop-blur-xl p-6 rounded-3xl shadow-lg border border-slate-700/50 hover:border-[#9f224e] hover:bg-[#1e293b]/70 hover:shadow-[0_0_20px_rgba(159,34,78,0.2)] transition-all group cursor-pointer active:scale-95 transform hover:-translate-y-1"
           >
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-4">

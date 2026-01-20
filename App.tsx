@@ -352,13 +352,16 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex font-sans text-slate-200 selection:bg-[#9f224e] selection:text-white">
+    <div className="min-h-screen bg-[#151e32] flex font-sans text-slate-200 selection:bg-[#9f224e] selection:text-white relative overflow-hidden">
+      {/* GLOBAL LIGHTING EFFECT */}
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_-20%,#334155,transparent_70%)] opacity-40 pointer-events-none z-0"></div>
+      
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
       
       <main className="flex-1 ml-64 p-10 relative z-10 transition-all duration-300">
-        {/* Ambient Glows - Lightened */}
-        <div className="fixed top-0 left-64 right-0 h-64 bg-gradient-to-b from-[#9f224e]/15 to-transparent pointer-events-none z-0"></div>
-        <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[100px] pointer-events-none z-0"></div>
+        {/* Ambient Glows - Lightened and Softer */}
+        <div className="fixed top-0 left-64 right-0 h-96 bg-gradient-to-b from-[#9f224e]/10 to-transparent pointer-events-none z-0"></div>
+        <div className="fixed bottom-0 right-0 w-[600px] h-[600px] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
         <header className="flex items-center justify-between mb-10 pb-6 relative z-10">
           <div className="flex flex-col">
@@ -374,12 +377,12 @@ const App: React.FC = () => {
             </h1>
             
             <div className="flex items-center gap-6 mt-6">
-              <div className="flex bg-slate-800/80 backdrop-blur border border-slate-700/60 p-1 rounded-xl inline-flex shadow-sm">
+              <div className="flex bg-[#1e293b]/40 backdrop-blur-md border border-slate-700/50 p-1 rounded-xl inline-flex shadow-sm">
                 {[2025, 2026].map(yr => (
                   <button 
                     key={yr}
                     onClick={() => setSelectedYear(yr)}
-                    className={`px-8 py-2 text-xs font-black rounded-lg transition-all ${selectedYear === yr ? 'bg-[#9f224e] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                    className={`px-8 py-2 text-xs font-black rounded-lg transition-all ${selectedYear === yr ? 'bg-[#9f224e] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-700/30'}`}
                   >
                     {yr}
                   </button>
@@ -400,7 +403,7 @@ const App: React.FC = () => {
             <button 
               onClick={() => fetchData()} 
               disabled={isRefreshing}
-              className={`p-4 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl text-slate-300 hover:text-[#9f224e] hover:border-[#9f224e]/50 transition-all shadow-lg active:scale-95 ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'}`}
+              className={`p-4 bg-[#1e293b]/40 backdrop-blur-md border border-slate-700/50 rounded-2xl text-slate-300 hover:text-[#9f224e] hover:border-[#9f224e]/50 transition-all shadow-lg active:scale-95 ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'}`}
               title="Force Refresh"
             >
               <svg className={`w-6 h-6 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,7 +420,7 @@ const App: React.FC = () => {
         {isLoading && projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[60vh]">
             <div className="relative">
-                <div className="w-20 h-20 border-4 border-slate-800 border-t-[#9f224e] rounded-full animate-spin"></div>
+                <div className="w-20 h-20 border-4 border-slate-700 border-t-[#9f224e] rounded-full animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-10 h-10 bg-[#9f224e]/20 rounded-full blur-xl animate-pulse"></div>
                 </div>
@@ -430,14 +433,14 @@ const App: React.FC = () => {
             
             {(activeView === 'projects') && (
               <div className="space-y-6">
-                 {/* SEARCH & FILTERS CONTAINER - Lightened */}
-                 <div className="bg-[#1e293b]/70 backdrop-blur-xl border border-slate-700/60 rounded-3xl p-6 shadow-xl space-y-4">
+                 {/* SEARCH & FILTERS CONTAINER - Lighter Glass Effect */}
+                 <div className="bg-[#1e293b]/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-6 shadow-xl space-y-4 hover:bg-[#1e293b]/50 transition-colors duration-500">
                     {/* Search Bar */}
                     <div className="relative w-full group">
                         <input 
                           type="text" 
                           placeholder="Search projects, PM, Department..." 
-                          className="w-full pl-12 pr-4 py-4 bg-[#0f172a]/80 border border-slate-600/50 rounded-2xl text-sm outline-none shadow-inner focus:ring-2 focus:ring-[#9f224e] focus:border-[#9f224e] text-white placeholder-slate-400 transition-all group-hover:border-slate-500" 
+                          className="w-full pl-12 pr-4 py-4 bg-[#0f172a]/60 border border-slate-600/40 rounded-2xl text-sm outline-none shadow-inner focus:ring-2 focus:ring-[#9f224e] focus:border-[#9f224e] text-white placeholder-slate-400 transition-all group-hover:border-slate-500/60" 
                           value={searchQuery} 
                           onChange={(e) => setSearchQuery(e.target.value)} 
                         />
@@ -461,7 +464,7 @@ const App: React.FC = () => {
                           <select 
                             value={filterDept}
                             onChange={(e) => setFilterDept(e.target.value)}
-                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
+                            className="bg-[#1e293b]/80 text-slate-200 text-xs font-bold border border-slate-600/40 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500/60 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All Departments</option>
                             {uniqueDepts.map(d => <option key={d} value={d}>{d}</option>)}
@@ -474,7 +477,7 @@ const App: React.FC = () => {
                           <select 
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
-                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
+                            className="bg-[#1e293b]/80 text-slate-200 text-xs font-bold border border-slate-600/40 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500/60 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All Types</option>
                             {Object.values(ProjectType).map(t => <option key={t} value={t}>{t}</option>)}
@@ -487,7 +490,7 @@ const App: React.FC = () => {
                           <select 
                             value={filterPM}
                             onChange={(e) => setFilterPM(e.target.value)}
-                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
+                            className="bg-[#1e293b]/80 text-slate-200 text-xs font-bold border border-slate-600/40 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500/60 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All PMs</option>
                             {uniquePMs.map(pm => <option key={pm} value={pm}>{pm}</option>)}
@@ -500,7 +503,7 @@ const App: React.FC = () => {
                           <select 
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
+                            className="bg-[#1e293b]/80 text-slate-200 text-xs font-bold border border-slate-600/40 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500/60 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All Statuses</option>
                             {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
@@ -513,7 +516,7 @@ const App: React.FC = () => {
                           <select 
                             value={filterQuarter}
                             onChange={(e) => setFilterQuarter(e.target.value)}
-                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
+                            className="bg-[#1e293b]/80 text-slate-200 text-xs font-bold border border-slate-600/40 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500/60 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All Quarters</option>
                             <option value="1">Quarter 1</option>

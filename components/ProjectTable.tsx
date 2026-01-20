@@ -36,11 +36,11 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onSelectProject }
   );
 
   return (
-    <div className="bg-[#1e293b]/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/60 overflow-hidden">
+    <div className="bg-[#1e293b]/50 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden transition-all duration-300 hover:bg-[#1e293b]/60">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-[#0f172a]/80 border-b border-slate-700/60">
+            <tr className="bg-[#1e293b]/80 border-b border-slate-700/50">
               <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] w-16">No.</th>
               <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Project / Description</th>
               <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">Dept / Type</th>
@@ -50,9 +50,9 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onSelectProject }
               <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-700/50">
+          <tbody className="divide-y divide-slate-700/40">
             {projects.map((project) => (
-              <tr key={project.id} className="hover:bg-slate-700/30 transition-all duration-200 group">
+              <tr key={project.id} className="hover:bg-slate-700/40 transition-all duration-200 group">
                 <td className="px-6 py-5">
                   <span className="font-mono text-sm font-bold text-slate-500 group-hover:text-slate-300 transition-colors">#{project.code}</span>
                 </td>

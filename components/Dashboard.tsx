@@ -65,7 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
         <StatCard 
           title="Total Projects" 
           value={stats.total} 
-          gradient="bg-gradient-to-br from-slate-700 to-slate-900"
+          gradient="bg-gradient-to-br from-slate-700 to-slate-800"
           icon={<svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
         />
         <StatCard 
@@ -91,7 +91,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
       {/* Main Analysis Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* ANN (Annual) */}
-        <div className="bg-[#1e293b]/70 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/60 shadow-xl">
+        <div className="bg-[#1e293b]/40 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 shadow-xl">
           <div className="flex items-center justify-between mb-8">
             <div>
               <span className="bg-[#9f224e] text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow-[0_0_10px_rgba(159,34,78,0.4)]">Annual</span>
@@ -106,11 +106,11 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
             {typeStats.annDesigners.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={typeStats.annDesigners} layout="vertical" margin={{ left: 30 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#475569" strokeOpacity={0.5} />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#475569" strokeOpacity={0.3} />
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={80} tick={{ fill: '#cbd5e1', fontSize: 12, fontWeight: 700 }} />
                   <Tooltip 
-                    cursor={{ fill: '#334155', opacity: 0.4 }} 
+                    cursor={{ fill: '#334155', opacity: 0.2 }} 
                     contentStyle={{ borderRadius: '12px', border: '1px solid #475569', backgroundColor: '#0f172a', color: '#fff', boxShadow: '0 10px 15px rgba(0,0,0,0.5)' }} 
                   />
                   <Bar dataKey="count" fill="#9f224e" radius={[0, 4, 4, 0]} barSize={24}>
@@ -127,7 +127,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
         </div>
 
         {/* NEW (New Projects) */}
-        <div className="bg-[#1e293b]/70 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/60 shadow-xl">
+        <div className="bg-[#1e293b]/40 backdrop-blur-xl rounded-3xl p-8 border border-slate-700/50 shadow-xl">
           <div className="flex items-center justify-between mb-8">
             <div>
               <span className="bg-emerald-600 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase shadow-[0_0_10px_rgba(5,150,105,0.4)]">New / Strategic</span>
@@ -168,7 +168,7 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
       </div>
 
       {/* Summary */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] to-[#0f1219] text-white p-8 rounded-3xl shadow-2xl border border-slate-700/60">
+      <div className="bg-gradient-to-r from-[#1a1a1a]/80 to-[#0f1219]/80 text-white p-8 rounded-3xl shadow-2xl border border-slate-700/50 backdrop-blur-md">
         <h4 className="text-sm font-black uppercase tracking-[0.2em] mb-8 flex items-center gap-3 text-slate-400">
            <span className="w-2 h-2 bg-[#9f224e] rounded-full shadow-[0_0_10px_#9f224e]"></span>
            Overall Designer Workload

@@ -20,7 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   ];
 
   return (
-    <div className="w-64 bg-[#0f172a] text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-800/60 z-50 shadow-2xl">
+    <div className="w-64 bg-[#111827] text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-700/50 z-50 shadow-2xl">
       <div className="p-8 pb-4">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-br from-[#9f224e] to-[#db2777] w-10 h-10 rounded-xl flex items-center justify-center font-black text-white shadow-[0_0_15px_rgba(159,34,78,0.5)]">
@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         </ul>
       </nav>
 
-      <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 shadow-lg cursor-pointer hover:border-slate-600 transition-colors group">
+      <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-[#1f293a] to-[#111827] border border-slate-700/50 shadow-lg cursor-pointer hover:border-slate-600 transition-colors group">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#9f224e] to-purple-500 p-[2px] group-hover:scale-110 transition-transform">
