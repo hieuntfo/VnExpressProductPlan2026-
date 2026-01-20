@@ -20,7 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
   ];
 
   return (
-    <div className="w-64 bg-[#111827]/80 backdrop-blur-xl text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-800/50 z-50">
+    <div className="w-64 bg-[#0f172a] text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-800/60 z-50 shadow-2xl">
       <div className="p-8 pb-4">
         <div className="flex items-center gap-3">
           <div className="bg-gradient-to-br from-[#9f224e] to-[#db2777] w-10 h-10 rounded-xl flex items-center justify-center font-black text-white shadow-[0_0_15px_rgba(159,34,78,0.5)]">
@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
                 onClick={() => setActiveView(item.id as any)}
                 className={`w-full flex items-center gap-3 px-4 py-4 rounded-2xl transition-all duration-300 group relative overflow-hidden ${
                   activeView === item.id 
-                    ? 'text-white shadow-lg' 
+                    ? 'text-white shadow-lg shadow-[#9f224e]/20' 
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 }`}
               >
@@ -61,16 +61,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         </ul>
       </nav>
 
-      <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 shadow-lg">
+      <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 shadow-lg cursor-pointer hover:border-slate-600 transition-colors group">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#9f224e] to-purple-500 p-[2px]">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#9f224e] to-purple-500 p-[2px] group-hover:scale-110 transition-transform">
               <img src="https://picsum.photos/seed/hieunt/40/40" className="w-full h-full rounded-full border-2 border-[#1e293b]" alt="Member" />
             </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#1e293b] shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#1e293b] shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse"></div>
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-bold truncate text-white">HieuNT</p>
+            <p className="text-sm font-bold truncate text-white group-hover:text-[#9f224e] transition-colors">HieuNT</p>
             <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Product Lead</p>
           </div>
         </div>

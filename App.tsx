@@ -352,13 +352,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b1121] flex font-sans text-slate-200 selection:bg-[#9f224e] selection:text-white">
+    <div className="min-h-screen bg-[#0f172a] flex font-sans text-slate-200 selection:bg-[#9f224e] selection:text-white">
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
       
       <main className="flex-1 ml-64 p-10 relative z-10 transition-all duration-300">
-        {/* Ambient Glows */}
-        <div className="fixed top-0 left-64 right-0 h-64 bg-gradient-to-b from-[#9f224e]/10 to-transparent pointer-events-none z-0"></div>
-        <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
+        {/* Ambient Glows - Lightened */}
+        <div className="fixed top-0 left-64 right-0 h-64 bg-gradient-to-b from-[#9f224e]/15 to-transparent pointer-events-none z-0"></div>
+        <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[100px] pointer-events-none z-0"></div>
 
         <header className="flex items-center justify-between mb-10 pb-6 relative z-10">
           <div className="flex flex-col">
@@ -374,23 +374,23 @@ const App: React.FC = () => {
             </h1>
             
             <div className="flex items-center gap-6 mt-6">
-              <div className="flex bg-slate-900/50 backdrop-blur border border-slate-700 p-1 rounded-xl inline-flex">
+              <div className="flex bg-slate-800/80 backdrop-blur border border-slate-700/60 p-1 rounded-xl inline-flex shadow-sm">
                 {[2025, 2026].map(yr => (
                   <button 
                     key={yr}
                     onClick={() => setSelectedYear(yr)}
-                    className={`px-8 py-2 text-xs font-black rounded-lg transition-all ${selectedYear === yr ? 'bg-[#9f224e] text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                    className={`px-8 py-2 text-xs font-black rounded-lg transition-all ${selectedYear === yr ? 'bg-[#9f224e] text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                   >
                     {yr}
                   </button>
                 ))}
               </div>
-              <div className="flex flex-col border-l border-slate-700 pl-6">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+              <div className="flex flex-col border-l border-slate-700/50 pl-6">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
                   Total Projects
                   </span>
                   <span className="text-sm font-black text-white">
-                  {projects.filter(p => p.year === selectedYear).length} <span className="text-slate-500 text-xs font-normal">Records</span>
+                  {projects.filter(p => p.year === selectedYear).length} <span className="text-slate-400 text-xs font-normal">Records</span>
                   </span>
               </div>
             </div>
@@ -400,14 +400,14 @@ const App: React.FC = () => {
             <button 
               onClick={() => fetchData()} 
               disabled={isRefreshing}
-              className={`p-4 bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl text-slate-400 hover:text-[#9f224e] hover:border-[#9f224e]/50 transition-all shadow-lg active:scale-95 ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`p-4 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl text-slate-300 hover:text-[#9f224e] hover:border-[#9f224e]/50 transition-all shadow-lg active:scale-95 ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'}`}
               title="Force Refresh"
             >
               <svg className={`w-6 h-6 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
-            <button onClick={() => setIsAddingProject(true)} className="bg-gradient-to-r from-[#9f224e] to-[#db2777] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-[0_0_20px_rgba(159,34,78,0.4)] flex items-center gap-2 hover:brightness-110 transition-all transform active:scale-95">
+            <button onClick={() => setIsAddingProject(true)} className="bg-gradient-to-r from-[#9f224e] to-[#db2777] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-[0_4px_20px_rgba(159,34,78,0.4)] flex items-center gap-2 hover:brightness-110 hover:-translate-y-1 transition-all transform active:scale-95 active:translate-y-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
               NEW PROJECT
             </button>
@@ -422,7 +422,7 @@ const App: React.FC = () => {
                     <div className="w-10 h-10 bg-[#9f224e]/20 rounded-full blur-xl animate-pulse"></div>
                 </div>
             </div>
-            <p className="text-slate-500 font-black mt-8 text-xs uppercase tracking-[0.3em] animate-pulse">Syncing Google Sheets...</p>
+            <p className="text-slate-400 font-black mt-8 text-xs uppercase tracking-[0.3em] animate-pulse">Syncing Google Sheets...</p>
           </div>
         ) : (
           <div className="animate-fade-in relative z-10">
@@ -430,18 +430,18 @@ const App: React.FC = () => {
             
             {(activeView === 'projects') && (
               <div className="space-y-6">
-                 {/* SEARCH & FILTERS CONTAINER */}
-                 <div className="bg-[#1e293b]/40 backdrop-blur-md border border-slate-700/50 rounded-3xl p-6 shadow-xl space-y-4">
+                 {/* SEARCH & FILTERS CONTAINER - Lightened */}
+                 <div className="bg-[#1e293b]/70 backdrop-blur-xl border border-slate-700/60 rounded-3xl p-6 shadow-xl space-y-4">
                     {/* Search Bar */}
-                    <div className="relative w-full">
+                    <div className="relative w-full group">
                         <input 
                           type="text" 
                           placeholder="Search projects, PM, Department..." 
-                          className="w-full pl-12 pr-4 py-4 bg-[#0f172a] border border-slate-700 rounded-2xl text-sm outline-none shadow-inner focus:ring-2 focus:ring-[#9f224e] focus:border-transparent text-white placeholder-slate-500 transition-all" 
+                          className="w-full pl-12 pr-4 py-4 bg-[#0f172a]/80 border border-slate-600/50 rounded-2xl text-sm outline-none shadow-inner focus:ring-2 focus:ring-[#9f224e] focus:border-[#9f224e] text-white placeholder-slate-400 transition-all group-hover:border-slate-500" 
                           value={searchQuery} 
                           onChange={(e) => setSearchQuery(e.target.value)} 
                         />
-                        <svg className="w-5 h-5 absolute left-4 top-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <svg className="w-5 h-5 absolute left-4 top-4 text-slate-400 group-focus-within:text-[#9f224e] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         
                         {(searchQuery || filterDept !== 'All' || filterPM !== 'All' || filterStatus !== 'All' || filterType !== 'All' || filterQuarter !== 'All') && (
                           <button 
@@ -456,12 +456,12 @@ const App: React.FC = () => {
                     {/* Filter Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                        {/* Dept Filter */}
-                       <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Department</label>
+                       <div className="flex flex-col gap-1.5 group">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 group-hover:text-slate-300 transition-colors">Department</label>
                           <select 
                             value={filterDept}
                             onChange={(e) => setFilterDept(e.target.value)}
-                            className="bg-[#1e293b] text-white text-xs font-bold border border-slate-700 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] transition-all cursor-pointer"
+                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All Departments</option>
                             {uniqueDepts.map(d => <option key={d} value={d}>{d}</option>)}
@@ -469,12 +469,12 @@ const App: React.FC = () => {
                        </div>
 
                        {/* Type Filter */}
-                       <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Type</label>
+                       <div className="flex flex-col gap-1.5 group">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 group-hover:text-slate-300 transition-colors">Type</label>
                           <select 
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
-                            className="bg-[#1e293b] text-white text-xs font-bold border border-slate-700 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] transition-all cursor-pointer"
+                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All Types</option>
                             {Object.values(ProjectType).map(t => <option key={t} value={t}>{t}</option>)}
@@ -482,12 +482,12 @@ const App: React.FC = () => {
                        </div>
 
                        {/* PM Filter */}
-                       <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">PM</label>
+                       <div className="flex flex-col gap-1.5 group">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 group-hover:text-slate-300 transition-colors">PM</label>
                           <select 
                             value={filterPM}
                             onChange={(e) => setFilterPM(e.target.value)}
-                            className="bg-[#1e293b] text-white text-xs font-bold border border-slate-700 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] transition-all cursor-pointer"
+                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All PMs</option>
                             {uniquePMs.map(pm => <option key={pm} value={pm}>{pm}</option>)}
@@ -495,12 +495,12 @@ const App: React.FC = () => {
                        </div>
 
                        {/* Status Filter */}
-                       <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Status</label>
+                       <div className="flex flex-col gap-1.5 group">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 group-hover:text-slate-300 transition-colors">Status</label>
                           <select 
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="bg-[#1e293b] text-white text-xs font-bold border border-slate-700 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] transition-all cursor-pointer"
+                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All Statuses</option>
                             {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
@@ -508,12 +508,12 @@ const App: React.FC = () => {
                        </div>
 
                         {/* Quarter Filter */}
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Quarter</label>
+                        <div className="flex flex-col gap-1.5 group">
+                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1 group-hover:text-slate-300 transition-colors">Quarter</label>
                           <select 
                             value={filterQuarter}
                             onChange={(e) => setFilterQuarter(e.target.value)}
-                            className="bg-[#1e293b] text-white text-xs font-bold border border-slate-700 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] transition-all cursor-pointer"
+                            className="bg-[#1e293b] text-slate-200 text-xs font-bold border border-slate-600/60 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] hover:border-slate-500 transition-all cursor-pointer shadow-sm"
                           >
                             <option value="All">All Quarters</option>
                             <option value="1">Quarter 1</option>
@@ -529,8 +529,8 @@ const App: React.FC = () => {
                  <div className="relative">
                     {/* Record count indicator floating above table on desktop, or inline on mobile */}
                     <div className="flex justify-end mb-2 px-2">
-                       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                         Showing {filteredProjects.length} of {projects.filter(p => p.year === selectedYear).length} projects
+                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                         Showing <span className="text-white">{filteredProjects.length}</span> of {projects.filter(p => p.year === selectedYear).length} projects
                        </span>
                     </div>
                     <ProjectTable projects={filteredProjects} onSelectProject={setSelectedProject} />
@@ -547,7 +547,7 @@ const App: React.FC = () => {
 
       {/* MODAL: ADD PROJECT */}
       {isAddingProject && (
-        <div className="fixed inset-0 bg-[#000]/80 backdrop-blur-md z-[999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#000]/90 backdrop-blur-md z-[999] flex items-center justify-center p-4">
           <div className="bg-[#1e293b] border border-slate-700 rounded-3xl w-full max-w-2xl shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
             <div className="p-8 border-b border-slate-700/50 flex items-center justify-between sticky top-0 bg-[#1e293b] z-10">
               <h2 className="text-2xl font-black text-white">Initialize Project {selectedYear}</h2>
@@ -566,28 +566,28 @@ const App: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-1">
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2">Project No. (Col A)</label>
-                  <input required type="text" className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none" placeholder="Ex: 5" onChange={e => setNewProject({...newProject, code: e.target.value})} />
+                  <label className="block text-xs font-black text-slate-400 uppercase mb-2">Project No. (Col A)</label>
+                  <input required type="text" className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none hover:border-slate-500 transition-all" placeholder="Ex: 5" onChange={e => setNewProject({...newProject, code: e.target.value})} />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2">Type (Col B)</label>
-                  <select className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none" onChange={e => setNewProject({...newProject, type: e.target.value as ProjectType})}>
+                  <label className="block text-xs font-black text-slate-400 uppercase mb-2">Type (Col B)</label>
+                  <select className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none hover:border-slate-500 transition-all" onChange={e => setNewProject({...newProject, type: e.target.value as ProjectType})}>
                     {Object.values(ProjectType).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2">Description (Col D)</label>
-                  <input required type="text" className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none" placeholder="Detailed project name..." onChange={e => setNewProject({...newProject, description: e.target.value})} />
+                  <label className="block text-xs font-black text-slate-400 uppercase mb-2">Description (Col D)</label>
+                  <input required type="text" className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none hover:border-slate-500 transition-all" placeholder="Detailed project name..." onChange={e => setNewProject({...newProject, description: e.target.value})} />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2">Department (Col F)</label>
-                  <select className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none" onChange={e => setNewProject({...newProject, department: e.target.value})}>
+                  <label className="block text-xs font-black text-slate-400 uppercase mb-2">Department (Col F)</label>
+                  <select className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none hover:border-slate-500 transition-all" onChange={e => setNewProject({...newProject, department: e.target.value})}>
                     {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs font-black text-slate-500 uppercase mb-2">Product Manager (Col M)</label>
-                  <select className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none" onChange={e => setNewProject({...newProject, pm: e.target.value})}>
+                  <label className="block text-xs font-black text-slate-400 uppercase mb-2">Product Manager (Col M)</label>
+                  <select className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-bold text-white focus:ring-2 focus:ring-[#9f224e] outline-none hover:border-slate-500 transition-all" onChange={e => setNewProject({...newProject, pm: e.target.value})}>
                     {TEAM_MEMBERS.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
@@ -610,13 +610,13 @@ const App: React.FC = () => {
 
       {/* MODAL: PROJECT DETAIL */}
       {selectedProject && (
-        <div className="fixed inset-0 bg-[#000]/80 backdrop-blur-md z-[999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-[#000]/90 backdrop-blur-md z-[999] flex items-center justify-center p-4">
           <div className="bg-[#1e293b] border border-slate-700 rounded-3xl w-full max-w-2xl shadow-2xl animate-scale-in">
             <div className="p-8 border-b border-slate-700/50 flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-3">
                    <span className="text-[10px] font-black text-[#9f224e] uppercase tracking-widest bg-[#9f224e]/10 px-3 py-1 rounded-full border border-[#9f224e]/20">Project Review</span>
-                   <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hidden md:inline-block">Press ESC to close</span>
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden md:inline-block">Press ESC to close</span>
                 </div>
                 <h2 className="text-2xl font-black text-white mt-3 leading-tight">{selectedProject.description}</h2>
               </div>
@@ -628,37 +628,37 @@ const App: React.FC = () => {
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Project No.</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Project No.</p>
                     <p className="font-mono text-base font-bold text-white">#{selectedProject.code}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Type</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Type</p>
                     <p className="text-base font-black text-white">{selectedProject.type}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Status</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Status</p>
                     <p className="text-base font-black text-[#9f224e] drop-shadow-[0_0_5px_rgba(159,34,78,0.5)]">{selectedProject.status}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Phase</p>
-                    <p className="text-sm font-bold text-slate-300">{selectedProject.phase || 'N/A'}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Phase</p>
+                    <p className="text-sm font-bold text-slate-200">{selectedProject.phase || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">KPI / Goals</p>
-                    <p className="text-sm font-bold text-slate-300">{selectedProject.kpi || 'Not set'}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">KPI / Goals</p>
+                    <p className="text-sm font-bold text-slate-200">{selectedProject.kpi || 'Not set'}</p>
                   </div>
                 </div>
                 <div className="space-y-6">
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Personnel</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Personnel</p>
                     <div className="space-y-2">
-                      <p className="text-sm font-bold text-slate-200">PM: <span className="text-white">{selectedProject.pm}</span></p>
-                      <p className="text-sm font-bold text-slate-200">PO: <span className="text-white">{selectedProject.po}</span></p>
+                      <p className="text-sm font-bold text-slate-300">PM: <span className="text-white">{selectedProject.pm}</span></p>
+                      <p className="text-sm font-bold text-slate-300">PO: <span className="text-white">{selectedProject.po}</span></p>
                       <p className="text-sm text-slate-400">Designer: <span className="text-slate-300">{selectedProject.designer}</span></p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase mb-1">Release Timeline</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Release Timeline</p>
                     <p className="text-sm font-black text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]">{selectedProject.releaseDate || 'TBA'}</p>
                     <p className="text-xs text-slate-500 mt-1">Tech HO: {selectedProject.techHandoff}</p>
                     <p className="text-xs text-slate-500">Quarter: Q{selectedProject.quarter}</p>
@@ -666,8 +666,8 @@ const App: React.FC = () => {
                 </div>
               </div>
               
-              <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 text-sm text-slate-400 leading-relaxed">
-                  <span className="block text-[10px] font-black text-slate-600 uppercase mb-2">Department / Folder</span>
+              <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 text-sm text-slate-300 leading-relaxed shadow-inner">
+                  <span className="block text-[10px] font-black text-slate-500 uppercase mb-2">Department / Folder</span>
                   {selectedProject.department}
               </div>
             </div>
