@@ -300,10 +300,22 @@ const App: React.FC = () => {
         }
       }
 
+      // FALLBACK INDICES based on specific requirements:
+      // Code(A)=0, ReleaseDate(J)=9, Status(O)=14, KPI(S)=18
       if (headerRowIndex === -1) {
-         colMap['code'] = 0; colMap['type'] = 1; colMap['description'] = 2; colMap['phase'] = 3;
-         colMap['department'] = 4; colMap['po'] = 5; colMap['techHandoff'] = 6; colMap['releaseDate'] = 8;
-         colMap['quarter'] = 10; colMap['pm'] = 12; colMap['designer'] = 13; colMap['status'] = 14; colMap['kpi'] = 18; 
+         colMap['code'] = 0; 
+         colMap['type'] = 1; 
+         colMap['description'] = 2; 
+         colMap['phase'] = 3;
+         colMap['department'] = 4; 
+         colMap['po'] = 5; 
+         colMap['techHandoff'] = 6; 
+         colMap['releaseDate'] = 9; // Column J
+         colMap['quarter'] = 10; 
+         colMap['pm'] = 12; 
+         colMap['designer'] = 13; 
+         colMap['status'] = 14; // Column O
+         colMap['kpi'] = 18; // Column S
          headerRowIndex = 0;
       }
       
@@ -429,27 +441,29 @@ const App: React.FC = () => {
 
     const updatedProject = { ...selectedProject, ...editFormData };
 
-    // Update Local State Optimistically
+    // 1. Update Local State Optimistically
     setProjects(prev => prev.map(p => p.id === selectedProject.id ? updatedProject : p));
     setSelectedProject(updatedProject);
 
+    // 2. Send to Google Sheet
     if (GOOGLE_SCRIPT_URL) {
        try {
         await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+          method: 'POST', 
+          mode: 'no-cors', 
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             action: 'update',
-            project_no: updatedProject.code,
-            status: updatedProject.status,
-            release_date: updatedProject.releaseDate,
-            kpi: updatedProject.kpi
+            project_no: updatedProject.code, // Find row by this
+            status: updatedProject.status,   // Update Col O
+            release_date: updatedProject.releaseDate, // Update Col J
+            kpi: updatedProject.kpi          // Update Col S
           })
         });
         alert('Cập nhật thành công! Dữ liệu đang được đồng bộ về Sheet.');
       } catch (error) { 
         console.error(error); 
-        alert('Lỗi kết nối khi cập nhật.'); 
-        // Revert local state if needed (not implemented for simplicity)
+        alert('Lỗi kết nối khi cập nhật. Vui lòng kiểm tra lại mạng.'); 
       }
     } else {
       alert('Đã cập nhật cục bộ (Chế độ offline).');
