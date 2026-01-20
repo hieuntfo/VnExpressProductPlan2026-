@@ -11,10 +11,13 @@ import MemberHub from './components/MemberHub';
 const DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJJ2HYdVoZ45yKhXPX8kydfkXB6eHebun5TNJlcMIFTtbYncCx8Nuq1sphQE0yeB1M9w_aC_QCzB2g/pub?output=tsv";
 
 const REFRESH_INTERVAL = 120000; // 2 minutes auto-refresh
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 // Cache keys
 const CACHE_KEY_PROJECTS = 'vne_pms_projects';
 const SESSION_KEY_AUTH = 'vne_pms_auth_session';
+const SESSION_KEY_ROLE = 'vne_pms_role';
+const SESSION_KEY_TIMESTAMP = 'vne_pms_timestamp';
 
 const App: React.FC = () => {
   // --- Theme State (Auto-VN Time) ---
@@ -58,10 +61,31 @@ const App: React.FC = () => {
     });
   };
 
-  // --- Authentication State ---
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return sessionStorage.getItem(SESSION_KEY_AUTH) === 'true';
+  // --- Authentication State & Logic ---
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return sessionStorage.getItem(SESSION_KEY_ROLE) === 'admin';
   });
+  
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const auth = sessionStorage.getItem(SESSION_KEY_AUTH) === 'true';
+    const timestampStr = sessionStorage.getItem(SESSION_KEY_TIMESTAMP);
+    
+    // If not authenticated or no timestamp, invalid
+    if (!auth || !timestampStr) return false;
+    
+    const timestamp = parseInt(timestampStr, 10);
+    const now = Date.now();
+    
+    // Check if session timed out
+    if (now - timestamp > SESSION_TIMEOUT) {
+      sessionStorage.clear();
+      return false;
+    }
+    
+    return true;
+  });
+
+  const [loginTab, setLoginTab] = useState<'user' | 'admin'>('user');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
@@ -83,6 +107,10 @@ const App: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Edit State (Admin Only)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState<Partial<Project>>({});
 
   // New Project Form State
   const [newProject, setNewProject] = useState<Partial<Project>>({
@@ -109,6 +137,7 @@ const App: React.FC = () => {
       if (e.key === 'Escape') {
         setSelectedProject(null);
         setIsAddingProject(false);
+        setIsEditing(false);
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -118,14 +147,64 @@ const App: React.FC = () => {
   // --- Authentication Handler ---
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === "123456") {
-      setIsAuthenticated(true);
-      sessionStorage.setItem(SESSION_KEY_AUTH, 'true');
-      setLoginError('');
+    setLoginError('');
+    const now = Date.now().toString();
+
+    if (loginTab === 'user') {
+      if (passwordInput === "123456") {
+        setIsAuthenticated(true);
+        setIsAdmin(false);
+        sessionStorage.setItem(SESSION_KEY_AUTH, 'true');
+        sessionStorage.setItem(SESSION_KEY_ROLE, 'user');
+        sessionStorage.setItem(SESSION_KEY_TIMESTAMP, now);
+      } else {
+        setLoginError('Mật khẩu User không đúng (Gợi ý: 123456)');
+      }
     } else {
-      setLoginError('Invalid password. Please try again.');
+      // Admin Login
+      if (passwordInput === "vnexpress") {
+        setIsAuthenticated(true);
+        setIsAdmin(true);
+        sessionStorage.setItem(SESSION_KEY_AUTH, 'true');
+        sessionStorage.setItem(SESSION_KEY_ROLE, 'admin');
+        sessionStorage.setItem(SESSION_KEY_TIMESTAMP, now);
+      } else {
+        setLoginError('Mật khẩu Admin không đúng');
+      }
     }
   };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setIsAdmin(false);
+    sessionStorage.removeItem(SESSION_KEY_AUTH);
+    sessionStorage.removeItem(SESSION_KEY_ROLE);
+    sessionStorage.removeItem(SESSION_KEY_TIMESTAMP);
+    setLoginTab('user'); // Reset default tab
+    setPasswordInput('');
+  };
+
+  // --- Auto Logout Effect ---
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Check every minute
+    const interval = setInterval(() => {
+       const timestampStr = sessionStorage.getItem(SESSION_KEY_TIMESTAMP);
+       if (timestampStr) {
+         const timestamp = parseInt(timestampStr, 10);
+         const now = Date.now();
+         if (now - timestamp > SESSION_TIMEOUT) {
+           handleLogout();
+           alert("Phiên đăng nhập đã hết hạn (30 phút). Vui lòng đăng nhập lại.");
+         }
+       } else {
+         handleLogout(); // Force logout if no timestamp found
+       }
+    }, 60000); // 1 minute
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   // --- Normalization Helpers ---
   const normalizeStatus = (statusStr: string): ProjectStatus => {
@@ -165,6 +244,17 @@ const App: React.FC = () => {
     if (q.includes('Q4') || q === '4') return 4;
     return 1;
   };
+
+  // --- Helper: Get Next Project Code ---
+  const getNextProjectCode = useCallback(() => {
+    if (!projects || projects.length === 0) return "1";
+    // Filter out non-numeric codes to avoid NaN issues, find max, then add 1
+    const maxCode = projects.reduce((max, p) => {
+        const num = parseInt(p.code, 10);
+        return !isNaN(num) && num > max ? num : max;
+    }, 0);
+    return (maxCode + 1).toString();
+  }, [projects]);
 
   // --- Data Fetching ---
 
@@ -318,12 +408,55 @@ const App: React.FC = () => {
       try {
         await fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ "project_no": newProject.code, "type": newProject.type, "description": newProject.description, "department": newProject.department, "product_manager": newProject.pm })
+          body: JSON.stringify({ 
+            action: 'add',
+            project_no: newProject.code, 
+            type: newProject.type, 
+            description: newProject.description, 
+            department: newProject.department, 
+            product_manager: newProject.pm 
+          })
         });
         alert('Đã gửi yêu cầu thêm dự án thành công!');
       } catch (error) { console.error(error); alert('Lỗi kết nối tới Google Sheet.'); }
     } else { alert('Đã thêm cục bộ.'); }
     setIsSubmitting(false); setIsAddingProject(false);
+  };
+
+  const handleUpdateProject = async () => {
+    if (!selectedProject || !isEditing) return;
+    setIsSubmitting(true);
+
+    const updatedProject = { ...selectedProject, ...editFormData };
+
+    // Update Local State Optimistically
+    setProjects(prev => prev.map(p => p.id === selectedProject.id ? updatedProject : p));
+    setSelectedProject(updatedProject);
+
+    if (GOOGLE_SCRIPT_URL) {
+       try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            action: 'update',
+            project_no: updatedProject.code,
+            status: updatedProject.status,
+            release_date: updatedProject.releaseDate,
+            kpi: updatedProject.kpi
+          })
+        });
+        alert('Cập nhật thành công! Dữ liệu đang được đồng bộ về Sheet.');
+      } catch (error) { 
+        console.error(error); 
+        alert('Lỗi kết nối khi cập nhật.'); 
+        // Revert local state if needed (not implemented for simplicity)
+      }
+    } else {
+      alert('Đã cập nhật cục bộ (Chế độ offline).');
+    }
+
+    setIsSubmitting(false);
+    setIsEditing(false);
   };
 
   const resetFilters = () => {
@@ -347,8 +480,28 @@ const App: React.FC = () => {
             </div>
 
             <form onSubmit={handleLogin} className="space-y-6">
+              {/* Role Selection Tabs */}
+              <div className="bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-xl flex relative mb-6">
+                 <button 
+                    type="button" 
+                    onClick={() => { setLoginTab('user'); setPasswordInput(''); setLoginError(''); }}
+                    className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all z-10 ${loginTab === 'user' ? 'bg-white dark:bg-[#9f224e] text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'}`}
+                 >
+                   User
+                 </button>
+                 <button 
+                    type="button" 
+                    onClick={() => { setLoginTab('admin'); setPasswordInput(''); setLoginError(''); }}
+                    className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all z-10 ${loginTab === 'admin' ? 'bg-white dark:bg-[#9f224e] text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'}`}
+                 >
+                   Admin
+                 </button>
+              </div>
+
               <div>
-                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 pl-1">System Password</label>
+                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 pl-1">
+                  {loginTab === 'user' ? 'Member Password' : 'Administrator Key'}
+                </label>
                 <input 
                   type="password" 
                   value={passwordInput}
@@ -369,7 +522,7 @@ const App: React.FC = () => {
                 type="submit"
                 className="w-full py-4 bg-[#9f224e] hover:bg-[#b92b5b] text-white font-black rounded-xl shadow-[0_10px_30px_rgba(159,34,78,0.3)] hover:shadow-[0_15px_40px_rgba(159,34,78,0.4)] transform active:scale-95 transition-all duration-200 uppercase tracking-wider text-sm flex items-center justify-center gap-2 group"
               >
-                Access Dashboard
+                {loginTab === 'user' ? 'Access Dashboard' : 'Admin Console'}
                 <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
               </button>
             </form>
@@ -399,7 +552,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b1121] flex font-sans text-slate-800 dark:text-slate-200 selection:bg-[#9f224e] selection:text-white relative overflow-hidden transition-colors duration-700">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_-20%,#e2e8f0,transparent_70%)] dark:bg-[radial-gradient(circle_at_50%_-20%,#1e293b,transparent_70%)] opacity-40 pointer-events-none z-0"></div>
       
-      <Sidebar activeView={activeView} setActiveView={setActiveView} />
+      <Sidebar activeView={activeView} setActiveView={setActiveView} isAdmin={isAdmin} onLogout={handleLogout} />
       
       <main className="flex-1 ml-64 p-10 relative z-10 transition-all duration-500">
         <header className="flex items-center justify-between mb-10 pb-6 relative z-10 animate-fade-in">
@@ -407,7 +560,7 @@ const App: React.FC = () => {
             <div className="flex items-center gap-2 mb-2">
               <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-amber-400 animate-ping' : 'bg-[#9f224e] shadow-[0_0_8px_#9f224e]'}`}></span>
               <span className="text-[10px] font-black uppercase text-[#9f224e] tracking-[0.3em]">
-                {isRefreshing ? 'Syncing...' : 'Live System'}
+                {isRefreshing ? 'Syncing...' : isAdmin ? 'Admin Mode' : 'Live System'}
               </span>
             </div>
             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
@@ -441,7 +594,13 @@ const App: React.FC = () => {
             <button onClick={() => fetchData()} disabled={isRefreshing} className={`p-4 bg-white/50 dark:bg-[#1e293b]/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-2xl text-slate-500 dark:text-slate-300 hover:text-[#9f224e] transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] active:scale-95 hover:shadow-md ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`} title="Force Refresh">
               <svg className={`w-6 h-6 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>
-            <button onClick={() => setIsAddingProject(true)} className="bg-gradient-to-r from-[#9f224e] to-[#db2777] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-[0_10px_20px_rgba(159,34,78,0.3)] flex items-center gap-2 hover:brightness-110 hover:-translate-y-1 transition-all transform active:scale-95 active:translate-y-0 border border-white/10">
+            <button 
+              onClick={() => {
+                setNewProject(prev => ({ ...prev, code: getNextProjectCode() }));
+                setIsAddingProject(true);
+              }} 
+              className="bg-gradient-to-r from-[#9f224e] to-[#db2777] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-[0_10px_20px_rgba(159,34,78,0.3)] flex items-center gap-2 hover:brightness-110 hover:-translate-y-1 transition-all transform active:scale-95 active:translate-y-0 border border-white/10"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
               NEW PROJECT
             </button>
@@ -505,7 +664,7 @@ const App: React.FC = () => {
                     <div className="flex justify-end mb-2 px-2">
                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Showing <span className="text-slate-900 dark:text-white">{filteredProjects.length}</span> of {projects.filter(p => p.year === selectedYear).length} projects</span>
                     </div>
-                    <ProjectTable projects={filteredProjects} onSelectProject={setSelectedProject} />
+                    <ProjectTable projects={filteredProjects} onSelectProject={(p) => { setSelectedProject(p); setIsEditing(false); }} />
                  </div>
               </div>
             )}
@@ -535,7 +694,7 @@ const App: React.FC = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-1">
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">Project No.</label>
-                  <input required type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none transition-all" placeholder="Ex: 5" onChange={e => setNewProject({...newProject, code: e.target.value})} />
+                  <input required type="text" value={newProject.code || ''} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none transition-all" placeholder="Auto-generated" onChange={e => setNewProject({...newProject, code: e.target.value})} />
                 </div>
                 <div className="col-span-1">
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">Type</label>
@@ -547,7 +706,6 @@ const App: React.FC = () => {
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">Description</label>
                   <input required type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none transition-all" placeholder="Detailed project name..." onChange={e => setNewProject({...newProject, description: e.target.value})} />
                 </div>
-                {/* Selectors for Dept & PM omitted for brevity but follow same style */}
                 <div className="col-span-1">
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">Department</label>
                   <select className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none" onChange={e => setNewProject({...newProject, department: e.target.value})}>{DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}</select>
@@ -568,67 +726,143 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: PROJECT DETAIL */}
+      {/* MODAL: PROJECT DETAIL & EDIT */}
       {selectedProject && (
         <div className="fixed inset-0 bg-slate-900/50 dark:bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-2xl animate-scale-in">
-            <div className="p-8 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between">
+          <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div className="p-8 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e293b] z-10">
               <div>
                 <div className="flex items-center gap-3">
-                   <span className="text-[10px] font-black text-[#9f224e] uppercase tracking-widest bg-[#9f224e]/10 px-3 py-1 rounded-full border border-[#9f224e]/20">Project Review</span>
-                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden md:inline-block">Press ESC to close</span>
+                   <span className="text-[10px] font-black text-[#9f224e] uppercase tracking-widest bg-[#9f224e]/10 px-3 py-1 rounded-full border border-[#9f224e]/20">
+                     {isEditing ? 'Editing Project' : 'Project Review'}
+                   </span>
+                   {!isEditing && <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden md:inline-block">Press ESC to close</span>}
                 </div>
                 <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-3 leading-tight">{selectedProject.description}</h2>
               </div>
-              <button onClick={() => setSelectedProject(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              
+              <div className="flex items-center gap-2">
+                {isAdmin && !isEditing && (
+                  <button 
+                    onClick={() => { 
+                      setIsEditing(true); 
+                      setEditFormData({ 
+                        status: selectedProject.status, 
+                        releaseDate: selectedProject.releaseDate, 
+                        kpi: selectedProject.kpi 
+                      }); 
+                    }} 
+                    className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all font-bold text-xs uppercase flex items-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    Edit
+                  </button>
+                )}
+                
+                <button onClick={() => { setSelectedProject(null); setIsEditing(false); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             </div>
+
             <div className="p-8 space-y-8">
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Project No.</p>
-                    <p className="font-mono text-base font-bold text-slate-800 dark:text-white">#{selectedProject.code}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Type</p>
-                    <p className="text-base font-black text-slate-800 dark:text-white">{selectedProject.type}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Status</p>
-                    <p className="text-base font-black text-[#9f224e] drop-shadow-[0_0_5px_rgba(159,34,78,0.5)]">{selectedProject.status}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Phase</p>
-                    <p className="text-sm font-bold text-slate-600 dark:text-slate-200">{selectedProject.phase || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">KPI / Goals</p>
-                    <p className="text-sm font-bold text-slate-600 dark:text-slate-200">{selectedProject.kpi || 'Not set'}</p>
-                  </div>
-                </div>
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Personnel</p>
-                    <div className="space-y-2">
-                      <p className="text-sm font-bold text-slate-500 dark:text-slate-300">PM: <span className="text-slate-800 dark:text-white">{selectedProject.pm}</span></p>
-                      <p className="text-sm font-bold text-slate-500 dark:text-slate-300">PO: <span className="text-slate-800 dark:text-white">{selectedProject.po}</span></p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Designer: <span className="text-slate-700 dark:text-slate-300">{selectedProject.designer}</span></p>
+              {isEditing ? (
+                 /* EDIT FORM (ADMIN) */
+                 <div className="space-y-6">
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-700/50 rounded-xl text-amber-800 dark:text-amber-200 text-xs font-bold">
+                      Admin Mode: You are editing protected fields. Changes will be synced to the Master Sheet.
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase mb-2">Status</label>
+                      <select 
+                        value={editFormData.status} 
+                        onChange={(e) => setEditFormData({...editFormData, status: e.target.value as ProjectStatus})}
+                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none"
+                      >
+                         {Object.values(ProjectStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase mb-2">Release Date (YYYY-MM-DD)</label>
+                      <input 
+                        type="text" 
+                        value={editFormData.releaseDate} 
+                        onChange={(e) => setEditFormData({...editFormData, releaseDate: e.target.value})}
+                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none"
+                        placeholder="e.g. 2026-12-31"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase mb-2">KPI / Goals</label>
+                      <input 
+                        type="text" 
+                        value={editFormData.kpi} 
+                        onChange={(e) => setEditFormData({...editFormData, kpi: e.target.value})}
+                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none"
+                        placeholder="e.g. 1M Pageviews"
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                       <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Cancel</button>
+                       <button 
+                         onClick={handleUpdateProject} 
+                         disabled={isSubmitting}
+                         className="px-8 py-2.5 bg-[#9f224e] text-white rounded-xl font-black shadow-lg hover:bg-[#b92b5b] transition-all flex items-center gap-2"
+                       >
+                         {isSubmitting ? 'Saving...' : 'Save Changes'}
+                       </button>
+                    </div>
+                 </div>
+              ) : (
+                /* READ ONLY VIEW */
+                <>
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Project No.</p>
+                        <p className="font-mono text-base font-bold text-slate-800 dark:text-white">#{selectedProject.code}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Type</p>
+                        <p className="text-base font-black text-slate-800 dark:text-white">{selectedProject.type}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Status</p>
+                        <p className="text-base font-black text-[#9f224e] drop-shadow-[0_0_5px_rgba(159,34,78,0.5)]">{selectedProject.status}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Phase</p>
+                        <p className="text-sm font-bold text-slate-600 dark:text-slate-200">{selectedProject.phase || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">KPI / Goals</p>
+                        <p className="text-sm font-bold text-slate-600 dark:text-slate-200">{selectedProject.kpi || 'Not set'}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Personnel</p>
+                        <div className="space-y-2">
+                          <p className="text-sm font-bold text-slate-500 dark:text-slate-300">PM: <span className="text-slate-800 dark:text-white">{selectedProject.pm}</span></p>
+                          <p className="text-sm font-bold text-slate-500 dark:text-slate-300">PO: <span className="text-slate-800 dark:text-white">{selectedProject.po}</span></p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Designer: <span className="text-slate-700 dark:text-slate-300">{selectedProject.designer}</span></p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Release Timeline</p>
+                        <p className="text-sm font-black text-emerald-500 dark:text-emerald-400">{selectedProject.releaseDate || 'TBA'}</p>
+                        <p className="text-xs text-slate-500 mt-1">Tech HO: {selectedProject.techHandoff}</p>
+                        <p className="text-xs text-slate-500">Quarter: Q{selectedProject.quarter}</p>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Release Timeline</p>
-                    <p className="text-sm font-black text-emerald-500 dark:text-emerald-400">{selectedProject.releaseDate || 'TBA'}</p>
-                    <p className="text-xs text-slate-500 mt-1">Tech HO: {selectedProject.techHandoff}</p>
-                    <p className="text-xs text-slate-500">Quarter: Q{selectedProject.quarter}</p>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
+                      <span className="block text-[10px] font-black text-slate-400 uppercase mb-2">Department / Folder</span>
+                      {selectedProject.department}
                   </div>
-                </div>
-              </div>
-              <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
-                  <span className="block text-[10px] font-black text-slate-400 uppercase mb-2">Department / Folder</span>
-                  {selectedProject.department}
-              </div>
+                </>
+              )}
             </div>
           </div>
         </div>

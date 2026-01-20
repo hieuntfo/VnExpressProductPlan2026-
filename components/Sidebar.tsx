@@ -4,9 +4,11 @@ import React from 'react';
 interface SidebarProps {
   activeView: 'dashboard' | 'projects' | 'team';
   setActiveView: (view: 'dashboard' | 'projects' | 'team') => void;
+  isAdmin: boolean;
+  onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isAdmin, onLogout }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Overview', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
@@ -63,19 +65,26 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         </ul>
       </nav>
 
-      <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-[#1f293a] dark:to-[#111827] border border-slate-200 dark:border-slate-700/50 shadow-lg cursor-pointer hover:border-[#9f224e]/30 transition-all duration-300 group hover:-translate-y-1">
-        <div className="flex items-center gap-3">
+      <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-[#1f293a] dark:to-[#111827] border border-slate-200 dark:border-slate-700/50 shadow-lg group">
+        <div className="flex items-center gap-3 mb-4">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#9f224e] to-purple-500 p-[2px] group-hover:rotate-12 transition-transform duration-500">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#9f224e] to-purple-500 p-[2px]">
               <img src="https://picsum.photos/seed/hieunt/40/40" className="w-full h-full rounded-full border-2 border-white dark:border-[#1e293b]" alt="Member" />
             </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-[#1e293b] shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse"></div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-[#1e293b]"></div>
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-bold truncate text-slate-800 dark:text-white group-hover:text-[#9f224e] transition-colors">HieuNT</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest">Product Lead</p>
+            <p className="text-sm font-bold truncate text-slate-800 dark:text-white">HieuNT</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest">{isAdmin ? 'Administrator' : 'Member'}</p>
           </div>
         </div>
+        <button 
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white rounded-xl transition-all duration-200 border border-transparent hover:shadow-md"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+          Sign Out
+        </button>
       </div>
     </div>
   );
