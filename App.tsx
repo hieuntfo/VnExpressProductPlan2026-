@@ -122,20 +122,20 @@ const App: React.FC = () => {
         const rowLower = rows[i].map(c => c.toLowerCase().trim());
         // Heuristic: Look for row containing typical headers
         if (
-          rowLower.some(c => c.includes('tên') || c.includes('project') || c.includes('mô tả')) && 
-          rowLower.some(c => c.includes('pm') || c.includes('quản trị') || c.includes('product'))
+          (rowLower.some(c => c.includes('tên') || c.includes('project') || c.includes('mô tả') || c.includes('description') || c.includes('issue'))) && 
+          (rowLower.some(c => c.includes('pm') || c.includes('quản trị') || c.includes('product') || c.includes('request') || c.includes('owner')))
         ) {
           headerRowIndex = i;
           rows[i].forEach((cell, idx) => {
              const c = cell.toLowerCase().trim();
              if (c.includes('stt') || c === 'no' || c === '#') colMap['code'] = idx;
              if (c.includes('loại') || c.includes('type')) colMap['type'] = idx;
-             if (c.includes('tên') || c.includes('project') || c.includes('mô tả') || c.includes('description')) colMap['description'] = idx;
+             if (c.includes('tên') || c.includes('project') || c.includes('mô tả') || c.includes('description') || c.includes('issue')) colMap['description'] = idx;
              if (c.includes('giai đoạn') || c.includes('phase')) colMap['phase'] = idx;
              if (c.includes('bộ phận') || c.includes('dept') || c.includes('folder')) colMap['department'] = idx;
              if (c.includes('yêu cầu') || c.includes('owner') || c.includes('request')) colMap['po'] = idx;
              if (c.includes('tech') || c.includes('handoff')) colMap['techHandoff'] = idx;
-             if (c.includes('release') || c.includes('golive') || c.includes('ngày')) colMap['releaseDate'] = idx;
+             if (c.includes('release') || c.includes('golive') || c.includes('ngày') || c.includes('date')) colMap['releaseDate'] = idx;
              if (c.includes('quý') || c.includes('quarter')) colMap['quarter'] = idx;
              if (c.includes('pm') || c.includes('product manager')) colMap['pm'] = idx;
              if (c.includes('designer') || c.includes('ui') || c.includes('ux')) colMap['designer'] = idx;
@@ -173,6 +173,23 @@ const App: React.FC = () => {
            // 2. Or must have content in Code column
            const code = (r[colMap['code']] || '').trim();
            
+           // EXCLUDE HEADER ROWS THAT MIGHT SLIP THROUGH
+           const lowerDesc = desc.toLowerCase();
+           const lowerCode = code.toLowerCase();
+           if (
+             lowerDesc === 'issue description' || 
+             lowerDesc === 'description' || 
+             lowerDesc === 'mô tả' || 
+             lowerDesc === 'tên dự án' ||
+             lowerDesc === 'project name' ||
+             lowerCode === 'no' || 
+             lowerCode === 'stt' ||
+             lowerCode === 'code' ||
+             lowerDesc === 'project plan' // Sheet title
+           ) {
+             return false;
+           }
+
            return desc.length > 0 || (code.length > 0 && code !== 'Total');
         })
         .map((row, idx) => {
