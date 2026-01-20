@@ -67,7 +67,7 @@ const MemberHub: React.FC<MemberHubProps> = ({ projects }) => {
                   {MEMBER_PROFILES[member.name]?.avatar ? (
                     <img src={MEMBER_PROFILES[member.name].avatar} alt={member.name} className="w-full h-full rounded-full object-cover" />
                   ) : (
-                    member.name.substring(0, 2).toUpperCase()
+                    member.name.charAt(0).toUpperCase()
                   )}
                 </div>
                 <div>
@@ -152,7 +152,7 @@ const MemberHub: React.FC<MemberHubProps> = ({ projects }) => {
                {MEMBER_PROFILES[selectedMember].avatar ? (
                  <img src={MEMBER_PROFILES[selectedMember].avatar} className="absolute inset-0 w-full h-full object-cover" alt={selectedMember} />
                ) : (
-                 <div className="text-6xl font-black text-slate-300">{selectedMember.substring(0,2)}</div>
+                 <div className="text-6xl font-black text-slate-300">{selectedMember.charAt(0).toUpperCase()}</div>
                )}
             </div>
 
