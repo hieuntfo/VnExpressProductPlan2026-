@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
 
+  // New Project Form State
   const [newProject, setNewProject] = useState<Partial<Project>>({
     year: 2026,
     type: ProjectType.NEW,
@@ -45,38 +46,52 @@ const App: React.FC = () => {
     notes: ''
   });
 
+  // --- Normalization Helpers ---
+
   const normalizeStatus = (statusStr: string): ProjectStatus => {
-    const s = (statusStr || '').trim();
-    const map: Record<string, ProjectStatus> = {
-      'Not Started': ProjectStatus.NOT_STARTED,
-      'In Progress': ProjectStatus.IN_PROGRESS,
-      'Done': ProjectStatus.DONE,
-      'Pending': ProjectStatus.PENDING,
-      'Re-Open': ProjectStatus.RE_OPEN,
-      'iOS Done': ProjectStatus.IOS_DONE,
-      'Android Done': ProjectStatus.ANDROID_DONE,
-      'Cancelled': ProjectStatus.CANCELLED,
-      'Hand-Off': ProjectStatus.HAND_OFF,
-      'Planning': ProjectStatus.PLANNING,
-    };
-    return map[s] || (s ? ProjectStatus.PLANNING : ProjectStatus.NOT_STARTED);
+    const s = (statusStr || '').toLowerCase().trim();
+    
+    // English Mapping
+    if (s.includes('not started')) return ProjectStatus.NOT_STARTED;
+    if (s.includes('in progress')) return ProjectStatus.IN_PROGRESS;
+    if (s.includes('done')) return ProjectStatus.DONE;
+    if (s.includes('pending')) return ProjectStatus.PENDING;
+    if (s.includes('re-open')) return ProjectStatus.RE_OPEN;
+    if (s.includes('ios done')) return ProjectStatus.IOS_DONE;
+    if (s.includes('android done')) return ProjectStatus.ANDROID_DONE;
+    if (s.includes('cancelled')) return ProjectStatus.CANCELLED;
+    if (s.includes('hand-off')) return ProjectStatus.HAND_OFF;
+    if (s.includes('planning')) return ProjectStatus.PLANNING;
+    
+    // Vietnamese Mapping
+    if (s.includes('đang làm') || s.includes('đang thực hiện') || s.includes('đang chạy')) return ProjectStatus.IN_PROGRESS;
+    if (s.includes('hoàn thành') || s.includes('đã xong') || s.includes('xong')) return ProjectStatus.DONE;
+    if (s.includes('chờ') || s.includes('tạm dừng')) return ProjectStatus.PENDING;
+    if (s.includes('hủy')) return ProjectStatus.CANCELLED;
+    if (s.includes('bàn giao')) return ProjectStatus.HAND_OFF;
+    if (s.includes('kế hoạch') || s.includes('dự kiến')) return ProjectStatus.PLANNING;
+    if (s.includes('chưa')) return ProjectStatus.NOT_STARTED;
+
+    return ProjectStatus.PLANNING; // Default fallback
   };
 
   const normalizeType = (typeStr: string): ProjectType => {
     const t = (typeStr || '').toUpperCase().trim();
-    if (t.includes('ANN') || t.includes('THƯỜNG NIÊN')) return ProjectType.ANNUAL;
-    if (t.includes('CHIẾN LƯỢC') || t.includes('STRATEGIC')) return ProjectType.STRATEGIC;
+    if (t.includes('ANN') || t.includes('THƯỜNG NIÊN') || t.includes('ANNUAL')) return ProjectType.ANNUAL;
+    if (t.includes('CHIẾN LƯỢC') || t.includes('STRATEGIC') || t.includes('STR')) return ProjectType.STRATEGIC;
     return ProjectType.NEW;
   };
 
   const parseQuarter = (qStr: string): number => {
     const q = (qStr || '').toUpperCase();
-    if (q.includes('Q1')) return 1;
-    if (q.includes('Q2')) return 2;
-    if (q.includes('Q3')) return 3;
-    if (q.includes('Q4')) return 4;
+    if (q.includes('Q1') || q === '1') return 1;
+    if (q.includes('Q2') || q === '2') return 2;
+    if (q.includes('Q3') || q === '3') return 3;
+    if (q.includes('Q4') || q === '4') return 4;
     return 1;
   };
+
+  // --- Data Fetching ---
 
   const fetchData = useCallback(async (isSilent = false) => {
     if (!isSilent) setIsLoading(true);
@@ -84,143 +99,167 @@ const App: React.FC = () => {
     
     try {
       const cacheBuster = `t=${Date.now()}`;
-      const fetchOptions = { cache: 'no-store' as RequestCache };
+      const response = await fetch(`${DATA_URL}${DATA_URL.includes('?') ? '&' : '?'}${cacheBuster}`);
 
-      const response = await fetch(`${DATA_URL}${DATA_URL.includes('?') ? '&' : '?'}${cacheBuster}`, fetchOptions);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch data from Google Sheets");
-      }
+      if (!response.ok) throw new Error("Failed to fetch data");
 
       const tsvText = await response.text();
       
-      // Check if response is actually HTML (Google Sheets sometimes returns HTML on error)
-      if (tsvText.trim().startsWith('<!DOCTYPE html') || tsvText.includes('<html')) {
-        throw new Error("Received HTML instead of TSV");
+      // Basic check for HTML error responses
+      if (tsvText.trim().startsWith('<') || tsvText.includes('<!DOCTYPE html')) {
+        throw new Error("Received HTML instead of TSV data");
       }
 
-      const rows = tsvText.split('\n').map(row => row.split('\t'));
+      // Robust splitting for different newline formats
+      const rows = tsvText.split(/\r?\n/).map(row => row.split('\t'));
 
-      // Filter and Map
+      // --- Dynamic Header Detection ---
+      // Try to find the header row to map columns dynamically
+      let headerRowIndex = -1;
+      const colMap: Record<string, number> = {};
+
+      for (let i = 0; i < Math.min(rows.length, 15); i++) {
+        const rowLower = rows[i].map(c => c.toLowerCase().trim());
+        // Heuristic: Look for row containing typical headers
+        if (
+          rowLower.some(c => c.includes('tên') || c.includes('project') || c.includes('mô tả')) && 
+          rowLower.some(c => c.includes('pm') || c.includes('quản trị') || c.includes('product'))
+        ) {
+          headerRowIndex = i;
+          rows[i].forEach((cell, idx) => {
+             const c = cell.toLowerCase().trim();
+             if (c.includes('stt') || c === 'no' || c === '#') colMap['code'] = idx;
+             if (c.includes('loại') || c.includes('type')) colMap['type'] = idx;
+             if (c.includes('tên') || c.includes('project') || c.includes('mô tả') || c.includes('description')) colMap['description'] = idx;
+             if (c.includes('giai đoạn') || c.includes('phase')) colMap['phase'] = idx;
+             if (c.includes('bộ phận') || c.includes('dept') || c.includes('folder')) colMap['department'] = idx;
+             if (c.includes('yêu cầu') || c.includes('owner') || c.includes('request')) colMap['po'] = idx;
+             if (c.includes('tech') || c.includes('handoff')) colMap['techHandoff'] = idx;
+             if (c.includes('release') || c.includes('golive') || c.includes('ngày')) colMap['releaseDate'] = idx;
+             if (c.includes('quý') || c.includes('quarter')) colMap['quarter'] = idx;
+             if (c.includes('pm') || c.includes('product manager')) colMap['pm'] = idx;
+             if (c.includes('designer') || c.includes('ui') || c.includes('ux')) colMap['designer'] = idx;
+             if (c.includes('trạng thái') || c.includes('status')) colMap['status'] = idx;
+             if (c.includes('kpi') || c.includes('okr')) colMap['kpi'] = idx;
+          });
+          break;
+        }
+      }
+
+      // Fallback if no header found (Use fixed indices based on user provided sheet structure)
+      if (headerRowIndex === -1) {
+        colMap['code'] = 0;
+        colMap['type'] = 1;
+        colMap['description'] = 2;
+        colMap['phase'] = 3;
+        colMap['department'] = 4;
+        colMap['po'] = 5;
+        colMap['techHandoff'] = 6;
+        colMap['releaseDate'] = 8;
+        colMap['quarter'] = 10;
+        colMap['pm'] = 11;
+        colMap['designer'] = 12;
+        colMap['status'] = 13;
+        headerRowIndex = 0; // Assume first row is header or data starts shortly after
+      }
+
+      // --- Parsing Rows ---
       const parsedProjects: Project[] = rows
+        .slice(headerRowIndex + 1) // Skip header
         .filter(r => {
-           // Improved Filter:
-           // 1. Must have enough columns (at least 3: No, Type, Desc)
-           if (r.length < 3) return false;
+           // Relaxed Filter: 
+           // 1. Must have content in Description column
+           const desc = (r[colMap['description']] || '').trim();
+           // 2. Or must have content in Code column
+           const code = (r[colMap['code']] || '').trim();
            
-           // 2. Column A (Index) must be a number. 
-           // We use this to distinguish data rows from headers or category rows.
-           const colA = (r[0] || '').trim();
-           if (!colA || isNaN(Number(colA))) return false;
-
-           // 3. Must have a description
-           const desc = (r[2] || '').trim();
-           return desc.length > 0;
+           return desc.length > 0 || (code.length > 0 && code !== 'Total');
         })
         .map((row, idx) => {
-          // Safe access to columns
-          const getCol = (i: number) => (row[i] || '').trim();
+          const getVal = (key: string) => (row[colMap[key]] || '').trim();
 
-          const indexNum = getCol(0);
-          const typeStr = getCol(1);
-          const description = getCol(2);
-          const phase = getCol(3);
-          const department = getCol(4);
-          const requestOwner = getCol(5);
-          const techHandoff = getCol(6);
-          // Col 7 is empty/padding
-          const releaseDate = getCol(8);
-          // Col 9 is empty/padding
-          const quarterStr = getCol(10);
-          const pm = getCol(11);
-          const designer = getCol(12);
-          const statusStr = getCol(13);
+          const releaseDate = getVal('releaseDate');
+          const techHandoff = getVal('techHandoff');
+          const quarterStr = getVal('quarter');
           
+          // Year Logic
           let year = 2026;
-          // Improved Year Detection
           const dateStr = (releaseDate + techHandoff + quarterStr).toUpperCase();
           
-          if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.startsWith('25')) {
+          if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.includes('25')) {
              year = 2025;
-          } else if (dateStr.includes('/26') || dateStr.includes('2026') || quarterStr.startsWith('26')) {
-             year = 2026;
-          } else {
-             // Fallback logic
-             year = 2026; 
-          }
-          
+          } else if (dateStr.includes('/24') || dateStr.includes('2024')) {
+             year = 2024;
+          } 
+          // Default to 2026
+
           return {
-            id: `p-${indexNum}-${idx}`,
-            code: indexNum,
+            id: `p-${idx}`,
+            code: getVal('code') || `${idx + 1}`,
             year,
-            description,
-            type: normalizeType(typeStr),
-            department: department || 'General',
-            status: normalizeStatus(statusStr),
-            phase,
+            description: getVal('description') || 'Untitled Project',
+            type: normalizeType(getVal('type')),
+            department: getVal('department') || 'General',
+            status: normalizeStatus(getVal('status')),
+            phase: getVal('phase'),
             quarter: parseQuarter(quarterStr),
             techHandoff,
             releaseDate,
-            pm,
-            designer,
-            po: requestOwner,
-            kpi: '', 
+            pm: getVal('pm'),
+            designer: getVal('designer'),
+            po: getVal('po'),
+            kpi: getVal('kpi'), 
             dashboardUrl: '',
             notes: ''
           };
         });
 
       if (parsedProjects.length > 0) {
+        console.log(`Successfully parsed ${parsedProjects.length} projects.`);
         setProjects(parsedProjects);
+        
         const now = new Date();
         setLastUpdated(now);
         localStorage.setItem(CACHE_KEY_PROJECTS, JSON.stringify(parsedProjects));
         localStorage.setItem(CACHE_KEY_LAST_UPDATED, now.toISOString());
       } else {
-        console.warn("Parsed 0 projects. Format might have changed.");
-        // If we really find nothing, keep existing or fallback if empty
-        if (projects.length === 0) {
-             const cached = localStorage.getItem(CACHE_KEY_PROJECTS);
-             if (cached) setProjects(JSON.parse(cached));
-             else setProjects(MOCK_PROJECTS); // Last resort
-        }
+        console.warn("Fetched data but found 0 valid projects. Falling back to Cache or Mock.");
+        // Try to recover from cache if fetch returns empty (rare but possible with network glitches)
+        const cached = localStorage.getItem(CACHE_KEY_PROJECTS);
+        if (cached) setProjects(JSON.parse(cached));
+        else setProjects(MOCK_PROJECTS);
       }
 
     } catch (error) {
       console.error("Data sync error:", error);
-      // Fallback on error
-      if (projects.length === 0) {
-          const cachedProjects = localStorage.getItem(CACHE_KEY_PROJECTS);
-          if (cachedProjects) {
-              setProjects(JSON.parse(cachedProjects));
-          } else {
-              setProjects(MOCK_PROJECTS);
-          }
+      // Fallback
+      const cached = localStorage.getItem(CACHE_KEY_PROJECTS);
+      if (cached) {
+          setProjects(JSON.parse(cached));
+      } else {
+          setProjects(MOCK_PROJECTS);
       }
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [projects.length]);
+  }, []);
 
   useEffect(() => {
-    // Initial Load
     fetchData();
-
-    // Auto Refresh
-    const timer = setInterval(() => {
-      fetchData(true);
-    }, REFRESH_INTERVAL);
-
+    const timer = setInterval(() => fetchData(true), REFRESH_INTERVAL);
     return () => clearInterval(timer);
-  }, []);
+  }, [fetchData]);
+
+  // --- Filtering & Handlers ---
 
   const filteredProjects = useMemo(() => {
     return projects.filter(p => p.year === selectedYear && (
       p.description.toLowerCase().includes(searchQuery.toLowerCase()) || 
       p.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.pm.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.designer.toLowerCase().includes(searchQuery.toLowerCase())
+      p.designer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.department.toLowerCase().includes(searchQuery.toLowerCase())
     ));
   }, [projects, selectedYear, searchQuery]);
 
@@ -233,11 +272,13 @@ const App: React.FC = () => {
     } as Project;
     setProjects(prev => [projectToAdd, ...prev]);
     setIsAddingProject(false);
-    alert('Project added temporarily. Please update Google Sheets to save permanently.');
+    alert('Project added locally. Please update the Google Sheet.');
   };
 
+  // --- Render ---
+
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex">
+    <div className="min-h-screen bg-[#f8f9fa] flex font-sans text-slate-900">
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
       
       <main className="flex-1 ml-64 p-8">
@@ -246,13 +287,14 @@ const App: React.FC = () => {
             <div className="flex items-center gap-2 mb-1">
               <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-amber-400 animate-ping' : 'bg-[#9f224e]'}`}></span>
               <span className="text-[10px] font-black uppercase text-[#9f224e] tracking-[0.2em]">
-                {isRefreshing ? 'Syncing Sheet...' : 'VnExpress P&T System'}
+                {isRefreshing ? 'Syncing...' : 'VnExpress P&T System'}
               </span>
             </div>
-            <h1 className="text-3xl font-black text-[#1a1a1a]">
+            <h1 className="text-3xl font-black text-[#1a1a1a] tracking-tight">
               {activeView === 'dashboard' ? `Report ${selectedYear}` : 
-               activeView === 'projects' ? 'Product Plan' : 'Member Hub'}
+               activeView === 'projects' ? 'Project Plan' : 'Member Hub'}
             </h1>
+            
             <div className="flex items-center gap-4 mt-4">
               <div className="flex bg-slate-200 p-1 rounded-xl inline-flex">
                 {[2025, 2026].map(yr => (
@@ -265,16 +307,14 @@ const App: React.FC = () => {
                   </button>
                 ))}
               </div>
-              {lastUpdated && (
-                <div className="flex flex-col">
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                    Last updated
-                    </span>
-                    <span className="text-[11px] font-black text-slate-600">
-                    {lastUpdated.toLocaleTimeString('en-US')}
-                    </span>
-                </div>
-              )}
+              <div className="flex flex-col border-l border-slate-300 pl-4">
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                  Total Projects
+                  </span>
+                  <span className="text-[11px] font-black text-slate-600">
+                  {projects.filter(p => p.year === selectedYear).length} Records
+                  </span>
+              </div>
             </div>
           </div>
           
@@ -283,7 +323,7 @@ const App: React.FC = () => {
               onClick={() => fetchData()} 
               disabled={isRefreshing}
               className={`p-3 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-[#9f224e] transition-all shadow-sm active:scale-90 ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title="Refresh Data"
+              title="Force Refresh"
             >
               <svg className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -299,7 +339,7 @@ const App: React.FC = () => {
         {isLoading && projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[60vh]">
             <div className="w-16 h-16 border-4 border-slate-100 border-t-[#9f224e] rounded-full animate-spin"></div>
-            <p className="text-slate-400 font-black mt-6 text-[11px] uppercase tracking-[0.3em] animate-pulse">Fetching from Sheet...</p>
+            <p className="text-slate-400 font-black mt-6 text-[11px] uppercase tracking-[0.3em] animate-pulse">Syncing Google Sheets...</p>
           </div>
         ) : (
           <div className="animate-fade-in">
@@ -310,7 +350,7 @@ const App: React.FC = () => {
                  <div className="relative max-w-md">
                     <input 
                       type="text" 
-                      placeholder="Search projects..." 
+                      placeholder="Search projects, PM, Department..." 
                       className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm outline-none shadow-sm focus:ring-2 focus:ring-[#9f224e]/20 transition-all" 
                       value={searchQuery} 
                       onChange={(e) => setSearchQuery(e.target.value)} 
@@ -342,7 +382,7 @@ const App: React.FC = () => {
             <form onSubmit={handleAddProject} className="p-8 space-y-6">
               <div className="bg-amber-50 text-amber-800 p-4 rounded-xl text-sm font-medium flex items-start gap-3">
                  <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                 <p>Note: This will add the project temporarily. To save permanently, please update Google Sheets.</p>
+                 <p>Note: This will add the project locally. To save permanently, please update Google Sheets.</p>
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-1">
@@ -374,7 +414,7 @@ const App: React.FC = () => {
               </div>
               <div className="flex justify-end gap-4 pt-8 border-t">
                 <button type="button" onClick={() => setIsAddingProject(false)} className="px-6 py-3 font-black text-slate-400 hover:text-slate-600">CANCEL</button>
-                <button type="submit" className="px-10 py-3 bg-[#9f224e] text-white rounded-xl font-black shadow-lg hover:bg-[#851a40] transform active:scale-95 transition-all">ADD TEMP</button>
+                <button type="submit" className="px-10 py-3 bg-[#9f224e] text-white rounded-xl font-black shadow-lg hover:bg-[#851a40] transform active:scale-95 transition-all">ADD</button>
               </div>
             </form>
           </div>
@@ -409,17 +449,25 @@ const App: React.FC = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Status</p>
                     <p className="text-base font-black text-[#9f224e]">{selectedProject.status}</p>
                   </div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Phase</p>
+                    <p className="text-sm font-bold text-slate-700">{selectedProject.phase || 'N/A'}</p>
+                  </div>
                 </div>
                 <div className="space-y-6">
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Personnel</p>
-                    <p className="text-sm font-bold text-slate-800">PM: {selectedProject.pm} | PO: {selectedProject.po}</p>
-                    <p className="text-xs text-slate-400 mt-1">Designer: {selectedProject.designer}</p>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-slate-800">PM: {selectedProject.pm}</p>
+                      <p className="text-sm font-bold text-slate-800">PO: {selectedProject.po}</p>
+                      <p className="text-sm text-slate-500">Designer: {selectedProject.designer}</p>
+                    </div>
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Release Timeline</p>
                     <p className="text-sm font-black text-emerald-600">{selectedProject.releaseDate || 'TBA'}</p>
                     <p className="text-xs text-slate-400 mt-1">Tech HO: {selectedProject.techHandoff}</p>
+                    <p className="text-xs text-slate-400">Quarter: Q{selectedProject.quarter}</p>
                   </div>
                 </div>
               </div>
