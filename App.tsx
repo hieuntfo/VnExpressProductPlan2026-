@@ -10,18 +10,15 @@ import MemberHub from './components/MemberHub';
 
 const DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJJ2HYdVoZ45yKhXPX8kydfkXB6eHebun5TNJlcMIFTtbYncCx8Nuq1sphQE0yeB1M9w_aC_QCzB2g/pub?output=tsv";
 
-// --- CONFIGURATION ---
 const REFRESH_INTERVAL = 120000; // 2 minutes auto-refresh
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
-// PLEASE REPLACE THIS URL WITH YOUR UPLOADED IMAGE URL
-const LOGIN_BG_URL = "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop"; 
 
 // Cache keys
 const CACHE_KEY_PROJECTS = 'vne_pms_projects';
 const SESSION_KEY_AUTH = 'vne_pms_auth_session';
 const SESSION_KEY_ROLE = 'vne_pms_role';
 const SESSION_KEY_TIMESTAMP = 'vne_pms_timestamp';
-const SESSION_KEY_USER_NAME = 'vne_pms_username';
+const SESSION_KEY_USER_NAME = 'vne_pms_username'; // New key for user display name
 
 const App: React.FC = () => {
   // --- Theme State (Auto-VN Time) ---
@@ -98,7 +95,7 @@ const App: React.FC = () => {
   const [loginError, setLoginError] = useState('');
 
   // --- Active Users Simulation (Admin Only) ---
-  const [activeUserCount, setActiveUserCount] = useState(12);
+  const [activeUserCount, setActiveUserCount] = useState(12); // Initial fake count
 
   useEffect(() => {
     if (!isAdmin || !isAuthenticated) return;
@@ -122,6 +119,7 @@ const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -181,8 +179,9 @@ const App: React.FC = () => {
       if (passwordInput === "123456") {
         setIsAuthenticated(true);
         setIsAdmin(false);
-        const userSeat = Math.floor(Math.random() * 20) + 1; 
-        const generatedName = `User ${userSeat}`;
+        // Generate random User ID (e.g. User 42)
+        const randomId = Math.floor(Math.random() * 100) + 1;
+        const generatedName = `User ${randomId}`;
         setUserName(generatedName);
         
         sessionStorage.setItem(SESSION_KEY_AUTH, 'true');
@@ -218,7 +217,7 @@ const App: React.FC = () => {
     sessionStorage.removeItem(SESSION_KEY_TIMESTAMP);
     sessionStorage.removeItem(SESSION_KEY_USER_NAME);
     setUserName('Guest');
-    setLoginTab('user');
+    setLoginTab('user'); // Reset default tab
     setPasswordInput('');
   };
 
@@ -239,7 +238,7 @@ const App: React.FC = () => {
        } else {
          handleLogout(); // Force logout if no timestamp found
        }
-    }, 60000); 
+    }, 60000); // 1 minute
 
     return () => clearInterval(interval);
   }, [isAuthenticated]);
@@ -286,6 +285,7 @@ const App: React.FC = () => {
   // --- Helper: Get Next Project Code ---
   const getNextProjectCode = useCallback(() => {
     if (!projects || projects.length === 0) return "1";
+    // Filter out non-numeric codes to avoid NaN issues, find max, then add 1
     const maxCode = projects.reduce((max, p) => {
         const num = parseInt(p.code, 10);
         return !isNaN(num) && num > max ? num : max;
@@ -312,6 +312,7 @@ const App: React.FC = () => {
       let headerRowIndex = -1;
       const colMap: Record<string, number> = {};
 
+      // Robust Header Detection
       for (let i = 0; i < Math.min(rows.length, 20); i++) {
         const rowLower = rows[i].map(c => c.toLowerCase().trim());
         if (rowLower.some(c => c.includes('tên') || c.includes('project') || c.includes('mô tả') || c.includes('description') || c.includes('issue') || c.includes('summary'))) {
@@ -336,6 +337,7 @@ const App: React.FC = () => {
         }
       }
 
+      // FALLBACK INDICES based on specific requirements:
       if (headerRowIndex === -1) {
          colMap['code'] = 0; 
          colMap['type'] = 1; 
@@ -344,12 +346,12 @@ const App: React.FC = () => {
          colMap['department'] = 4; 
          colMap['po'] = 5; 
          colMap['techHandoff'] = 6; 
-         colMap['releaseDate'] = 9; 
+         colMap['releaseDate'] = 9; // Column J
          colMap['quarter'] = 10; 
          colMap['pm'] = 12; 
          colMap['designer'] = 13; 
-         colMap['status'] = 14; 
-         colMap['kpi'] = 18; 
+         colMap['status'] = 14; // Column O
+         colMap['kpi'] = 18; // Column S
          headerRowIndex = 0;
       }
       
@@ -364,6 +366,9 @@ const App: React.FC = () => {
           const techHandoff = getVal('techHandoff');
           const quarterStr = getVal('quarter');
           
+          // --- FIX: Always read status from Column O (index 14) as requested ---
+          const statusValue = (row[14] || '').trim();
+
           let year = 2026; 
           const dateStr = (releaseDate + techHandoff + quarterStr).toUpperCase();
           if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.includes('25')) year = 2025;
@@ -376,7 +381,7 @@ const App: React.FC = () => {
             description: getVal('description') || 'Untitled Project',
             type: normalizeType(getVal('type')),
             department: getVal('department') || 'General',
-            status: normalizeStatus(getVal('status')),
+            status: normalizeStatus(statusValue),
             phase: getVal('phase'),
             quarter: parseQuarter(quarterStr),
             techHandoff,
@@ -391,6 +396,7 @@ const App: React.FC = () => {
       if (parsedProjects.length > 0) {
         setProjects(parsedProjects);
         localStorage.setItem(CACHE_KEY_PROJECTS, JSON.stringify(parsedProjects));
+        setLastSyncTime(new Date());
       } else {
         console.warn("Parsed projects empty. Falling back.");
         throw new Error("Empty parsed data");
@@ -488,10 +494,11 @@ const App: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             action: 'update',
-            project_no: String(updatedProject.code).trim(), 
-            status: updatedProject.status,
-            release_date: updatedProject.releaseDate,
-            kpi: updatedProject.kpi
+            // Ensure we trim whitespace from the project code (project_no) to match exact cell value
+            project_no: updatedProject.code.trim(), 
+            status: updatedProject.status,   // Update Col O
+            release_date: updatedProject.releaseDate, // Update Col J
+            kpi: updatedProject.kpi          // Update Col S
           })
         });
         alert('Cập nhật thành công! Dữ liệu đang được đồng bộ về Sheet (Project Plan).');
@@ -514,86 +521,80 @@ const App: React.FC = () => {
   // --- RENDER LOGIN VIEW ---
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen relative flex items-center justify-center overflow-hidden font-sans">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <img src={LOGIN_BG_URL} className="w-full h-full object-cover" alt="VnExpress Office" />
-          {/* Gradient Overlay: Top (Dark) -> Bottom (Vne Red) for brand identity and text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#9f224e]/90 via-slate-900/60 to-slate-900/40 mix-blend-multiply"></div>
-          <div className="absolute inset-0 bg-black/30"></div> {/* Additional dimming */}
+      <div className="min-h-screen bg-slate-100 dark:bg-[#0b1121] flex items-center justify-center p-4 font-sans text-slate-800 dark:text-slate-200 relative transition-colors duration-700 overflow-hidden">
+        {/* Animated Aurora Background */}
+        <div className="absolute top-0 left-0 w-full h-full z-0">
+            <div className="animate-aurora absolute -top-1/4 -left-1/4 w-full h-full bg-gradient-to-r from-vne-primary via-purple-500 to-cyan-500 rounded-full filter blur-3xl opacity-50 dark:opacity-30"></div>
+            <div className="animate-aurora animation-delay-2000 absolute -bottom-1/4 -right-1/4 w-3/4 h-3/4 bg-gradient-to-r from-vne-secondary to-pink-500 rounded-full filter blur-3xl opacity-50 dark:opacity-20"></div>
+            <div className="animate-aurora animation-delay-4000 absolute bottom-1/4 left-0 w-1/2 h-1/2 bg-gradient-to-r from-sky-400 to-emerald-400 rounded-full filter blur-3xl opacity-50 dark:opacity-20"></div>
         </div>
         
-        <div className="relative z-10 w-full max-w-md p-6 animate-scale-in">
-          {/* Glassmorphism Card */}
-          <div className="bg-white/80 dark:bg-[#0f172a]/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-[2rem] p-10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]">
-            <div className="text-center mb-10">
-               <div className="mx-auto w-16 h-16 bg-gradient-to-br from-[#9f224e] to-[#db2777] rounded-2xl flex items-center justify-center font-black text-white text-3xl shadow-[0_10px_30px_rgba(159,34,78,0.5)] mb-6 transform hover:scale-110 transition-transform duration-300 ring-4 ring-white/20">
-                  V
-               </div>
-               <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight drop-shadow-sm">VnExpress</h1>
-               <p className="text-[#9f224e] dark:text-[#f43f5e] font-bold text-xs uppercase tracking-[0.3em] mt-2 text-shadow-sm">Product Management 2026</p>
+        <div className="relative z-10 w-full max-w-md">
+            <div className="bg-white/20 dark:bg-slate-900/30 backdrop-blur-xl border border-white/30 dark:border-slate-700/50 rounded-[2.5rem] p-8 md:p-12 shadow-2xl shadow-slate-500/10 dark:shadow-black/50 animate-scale-in">
+                <div className="text-center mb-10">
+                    <div className="inline-block relative mb-6 group">
+                        <div className="absolute -inset-1.5 bg-gradient-to-br from-vne-primary to-purple-600 rounded-3xl blur-lg opacity-60 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                        <div className="relative mx-auto w-20 h-20 bg-white dark:bg-slate-900 rounded-3xl flex items-center justify-center font-black text-4xl shadow-lg">
+                           <span className="bg-clip-text text-transparent bg-gradient-to-br from-vne-primary to-purple-600">V</span>
+                        </div>
+                    </div>
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">VnExpress</h1>
+                    <p className="text-vne-primary dark:text-vne-secondary font-bold text-xs uppercase tracking-[0.3em] mt-2">Product Management 2026</p>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div className="bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-xl flex relative mb-6 backdrop-blur-sm border border-white/20 dark:border-slate-700/30">
+                     <button 
+                        type="button" 
+                        onClick={() => { setLoginTab('user'); setPasswordInput(''); setLoginError(''); }}
+                        className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all z-10 ${loginTab === 'user' ? 'bg-white dark:bg-vne-primary text-slate-900 dark:text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                     >
+                       User
+                     </button>
+                     <button 
+                        type="button" 
+                        onClick={() => { setLoginTab('admin'); setPasswordInput(''); setLoginError(''); }}
+                        className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all z-10 ${loginTab === 'admin' ? 'bg-white dark:bg-vne-primary text-slate-900 dark:text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
+                     >
+                       Admin
+                     </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 pl-1">
+                      {loginTab === 'user' ? 'Member Password' : 'Administrator Key'}
+                    </label>
+                    <input 
+                      type="password" 
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      className="w-full px-4 py-4 bg-slate-50/50 dark:bg-slate-900/50 border border-white/30 dark:border-slate-600/40 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-vne-primary focus:border-transparent transition-all shadow-inner font-bold tracking-widest"
+                      placeholder="••••••"
+                      autoFocus
+                    />
+                    {loginError && (
+                      <p className="text-red-500 dark:text-red-400 text-xs mt-3 flex items-center gap-1 font-bold animate-pulse">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {loginError}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <button 
+                    type="submit"
+                    className="w-full py-4 bg-gradient-to-br from-vne-primary to-vne-secondary text-white font-black rounded-xl shadow-lg shadow-vne-primary/20 hover:shadow-xl hover:shadow-vne-primary/40 transform active:scale-95 transition-all duration-300 uppercase tracking-wider text-sm flex items-center justify-center gap-2 group"
+                  >
+                    {loginTab === 'user' ? 'Access Dashboard' : 'Admin Console'}
+                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                  </button>
+                </form>
             </div>
-
-            <form onSubmit={handleLogin} className="space-y-6">
-              {/* Role Selection Tabs */}
-              <div className="bg-slate-100/50 dark:bg-black/30 p-1.5 rounded-xl flex relative mb-6 backdrop-blur-sm border border-white/10">
-                 <button 
-                    type="button" 
-                    onClick={() => { setLoginTab('user'); setPasswordInput(''); setLoginError(''); }}
-                    className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all z-10 ${loginTab === 'user' ? 'bg-white text-[#9f224e] shadow-md' : 'text-slate-500 dark:text-slate-300 hover:text-white'}`}
-                 >
-                   User
-                 </button>
-                 <button 
-                    type="button" 
-                    onClick={() => { setLoginTab('admin'); setPasswordInput(''); setLoginError(''); }}
-                    className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all z-10 ${loginTab === 'admin' ? 'bg-white text-[#9f224e] shadow-md' : 'text-slate-500 dark:text-slate-300 hover:text-white'}`}
-                 >
-                   Admin
-                 </button>
-              </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest mb-2 pl-1">
-                  {loginTab === 'user' ? 'Member Password' : 'Administrator Key'}
-                </label>
-                <input 
-                  type="password" 
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="w-full px-4 py-4 bg-white/50 dark:bg-black/40 border border-slate-200/50 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#9f224e] focus:border-transparent transition-all shadow-inner font-bold tracking-widest backdrop-blur-sm"
-                  placeholder="••••••"
-                  autoFocus
-                />
-                {loginError && (
-                  <p className="text-red-600 dark:text-red-300 text-xs mt-3 flex items-center gap-1 font-bold animate-pulse bg-red-100/50 dark:bg-red-900/30 p-2 rounded-lg">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {loginError}
-                  </p>
-                )}
-              </div>
-              
-              <button 
-                type="submit"
-                className="w-full py-4 bg-[#9f224e] hover:bg-[#b92b5b] text-white font-black rounded-xl shadow-[0_10px_30px_rgba(159,34,78,0.4)] hover:shadow-[0_15px_40px_rgba(159,34,78,0.5)] transform active:scale-95 transition-all duration-200 uppercase tracking-wider text-sm flex items-center justify-center gap-2 group ring-2 ring-transparent hover:ring-[#db2777]"
-              >
-                {loginTab === 'user' ? 'Access Dashboard' : 'Admin Console'}
-                <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-              </button>
-            </form>
-
-             <div className="mt-10 pt-8 border-t border-slate-200/50 dark:border-white/10 text-center">
-              <p className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Internal Access Only</p>
-              <div className="inline-flex items-center gap-2 bg-slate-50/50 dark:bg-white/5 rounded-full px-4 py-2 border border-slate-200/50 dark:border-white/10 backdrop-blur-sm">
-                 <div className="relative">
-                    <img src="https://ui-avatars.com/api/?name=Hieu+Nguyen&background=9f224e&color=fff&size=64" alt="Admin" className="w-6 h-6 rounded-full border border-white dark:border-white/20" />
-                    <div className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white"></div>
-                 </div>
-                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Contact: <span className="text-[#9f224e] dark:text-white">nguyenhieu@vnexpress.net</span></span>
-              </div>
+            <div className="text-center text-slate-500 dark:text-slate-600 text-xs mt-8 font-medium leading-relaxed">
+              <p>© 2026 VnExpress Product</p>
+              <p className="mt-1">
+                Admin: Hiếu Nguyễn - 0902423384 | Email: <a href="mailto:nguyenhieu@vnexpress.net" className="hover:text-vne-primary transition-colors">nguyenhieu@vnexpress.net</a>
+              </p>
             </div>
-          </div>
-          <p className="text-center text-white/60 text-[10px] mt-6 font-medium drop-shadow-md">© 2026 VnExpress Product & Technology</p>
         </div>
       </div>
     );
@@ -617,6 +618,12 @@ const App: React.FC = () => {
                    {isRefreshing ? 'Syncing...' : isAdmin ? 'Admin Mode' : 'Live System'}
                  </span>
               </div>
+
+              {lastSyncTime && !isRefreshing && (
+                <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 hidden md:block">
+                    | Last synced: {lastSyncTime.toLocaleTimeString('vi-VN')}
+                </div>
+              )}
               
               {/* Active User Count (Admin Only) */}
               {isAdmin && (
@@ -942,6 +949,18 @@ const App: React.FC = () => {
         @keyframes scale-in { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
         .animate-fade-in { animation: fade-in 0.6s cubic-bezier(0.2, 0, 0, 1); }
         .animate-scale-in { animation: scale-in 0.5s cubic-bezier(0.2, 0, 0, 1); }
+        .animate-slide-in { animation: slide-in 0.5s cubic-bezier(0.2, 0, 0, 1); }
+        @keyframes slide-in { 0% { transform: translateX(100%); } 100% { transform: translateX(0); } }
+        
+        @keyframes aurora {
+          0% { transform: translate(-20%, -20%) rotate(0deg) scale(1); }
+          50% { transform: translate(20%, 20%) rotate(180deg) scale(1.2); }
+          100% { transform: translate(-20%, -20%) rotate(360deg) scale(1); }
+        }
+        .animate-aurora { animation: aurora 30s infinite linear; }
+        .animation-delay-2000 { animation-delay: -15s; }
+        .animation-delay-4000 { animation-delay: -25s; }
+
       `}</style>
     </div>
   );
