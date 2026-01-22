@@ -547,8 +547,8 @@ const App: React.FC = () => {
                 <div className="text-center mb-10">
                     <div className="inline-block relative mb-6 group">
                         <div className="absolute -inset-1.5 bg-gradient-to-br from-vne-primary to-purple-600 rounded-3xl blur-lg opacity-60 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
-                        <div className="relative mx-auto w-20 h-20 bg-white dark:bg-slate-900 rounded-3xl flex items-center justify-center font-black text-4xl shadow-lg">
-                           <span className="bg-clip-text text-transparent bg-gradient-to-br from-vne-primary to-purple-600">V</span>
+                        <div className="relative mx-auto w-20 h-20 bg-white dark:bg-slate-900 rounded-3xl flex items-center justify-center font-black text-6xl shadow-lg">
+                           <span className="bg-clip-text text-transparent bg-gradient-to-br from-vne-primary to-purple-600">P</span>
                         </div>
                     </div>
                     <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">VnExpress</h1>
