@@ -66,6 +66,14 @@
       .animate-tilt {
           animation: tilt 10s infinite linear;
       }
+      /* Lightbox Animation */
+      @keyframes slide-in-right { 
+        0% { transform: translateX(100%); } 
+        100% { transform: translateX(0); } 
+      }
+      .animate-slide-in-right { 
+        animation: slide-in-right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; 
+      }
     </style>
   <script type="importmap">
 {

@@ -1,12 +1,14 @@
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { DEPARTMENTS, MOCK_PROJECTS, GOOGLE_SCRIPT_URL, MEMBERS_DATA_URL } from './constants';
-import { Project, ProjectStatus, ProjectType, Member } from './types';
+import { DEPARTMENTS, MOCK_PROJECTS, GOOGLE_SCRIPT_URL, MEMBERS_DATA_URL, DOCUMENTS_DATA_URL } from './constants';
+import { Project, ProjectStatus, ProjectType, Member, MemberWithStats, Document } from './types';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ProjectTable from './components/ProjectTable';
 import AIAssistant from './components/AIAssistant';
 import MemberHub from './components/MemberHub';
+import DocumentHub from './components/DocumentHub';
+import DocumentDetail from './components/DocumentDetail';
 
 const DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJJ2HYdVoZ45yKhXPX8kydfkXB6eHebun5TNJlcMIFTtbYncCx8Nuq1sphQE0yeB1M9w_aC_QCzB2g/pub?output=tsv";
 
@@ -114,10 +116,11 @@ const App: React.FC = () => {
   }, [isAdmin, isAuthenticated]);
 
   // --- Main App State ---
-  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'team'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'team' | 'document'>('dashboard');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [projects, setProjects] = useState<Project[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
@@ -131,6 +134,8 @@ const App: React.FC = () => {
   const [filterQuarter, setFilterQuarter] = useState<string>('All');
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedMember, setSelectedMember] = useState<MemberWithStats | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -164,6 +169,8 @@ const App: React.FC = () => {
         setSelectedProject(null);
         setIsAddingProject(false);
         setIsEditing(false);
+        setSelectedMember(null);
+        setSelectedDocument(null);
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -295,6 +302,30 @@ const App: React.FC = () => {
   }, [projects]);
 
   // --- Data Fetching ---
+  const fetchDocuments = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const response = await fetch(`${DOCUMENTS_DATA_URL}&t=${Date.now()}`);
+      if (!response.ok) throw new Error("Failed to fetch document data");
+      const tsvText = await response.text();
+      if (tsvText.trim().startsWith('<') || tsvText.includes('<!DOCTYPE html')) {
+          throw new Error("Received HTML instead of TSV for documents.");
+      }
+      const rows = tsvText.split(/\r?\n/).slice(1); // Skip header
+      const parsedDocs: Document[] = rows.map((rowStr, index) => {
+        const row = rowStr.split('\t');
+        return {
+          id: `doc-${index}`,
+          name: (row[0] || '').trim(),
+          description: (row[1] || '').trim(),
+        };
+      }).filter(d => d.name); // Ensure doc has a name
+      setDocuments(parsedDocs);
+    } catch (error) {
+      console.error("Document data sync error:", error);
+    }
+  }, [isAuthenticated]);
+
   const fetchMembers = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
@@ -315,6 +346,7 @@ const App: React.FC = () => {
           name: name,
           fullName: fullName,
           dob: (row[3] || '').trim(),
+          phone: (row[4] || '').trim(),
           email: (row[5] || '').trim(),
           startDate: (row[6] || '').trim(),
           avatar: avatarFromSheet || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || fullName || 'VNE')}&length=1&background=random&color=fff&size=128`,
@@ -453,13 +485,15 @@ const App: React.FC = () => {
     if (isAuthenticated) {
       fetchData();
       fetchMembers();
+      fetchDocuments();
       const timer = setInterval(() => {
         fetchData(true);
         fetchMembers();
+        fetchDocuments();
       }, REFRESH_INTERVAL);
       return () => clearInterval(timer);
     }
-  }, [fetchData, fetchMembers, isAuthenticated]);
+  }, [fetchData, fetchMembers, fetchDocuments, isAuthenticated]);
 
   const { uniqueDepts, uniquePMs, uniqueStatuses, teamMemberNames } = useMemo(() => {
     const currentProjects = projects.filter(p => p.year === selectedYear);
@@ -698,7 +732,8 @@ const App: React.FC = () => {
             <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
               {activeView === 'dashboard' ? `Report ${selectedYear}` : 
                activeView === 'projects' ? 'Project Plan' : 
-               'Member Hub'}
+               activeView === 'team' ? 'Member Hub' :
+               'Document Center'}
             </h1>
             
             <div className="flex items-center gap-6 mt-6">
@@ -719,6 +754,12 @@ const App: React.FC = () => {
                   <div className="flex flex-col">
                       <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Members</span>
                       <span className="text-sm font-black text-slate-900 dark:text-white">{members.length} <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">Records</span></span>
+                  </div>
+              )}
+               {activeView === 'document' && (
+                  <div className="flex flex-col">
+                      <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Documents</span>
+                      <span className="text-sm font-black text-slate-900 dark:text-white">{documents.length} <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">Files</span></span>
                   </div>
               )}
             </div>
@@ -812,7 +853,9 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {activeView === 'team' && <MemberHub projects={projects.filter(p => p.year === selectedYear)} members={members} />}
+            {activeView === 'team' && <MemberHub projects={projects.filter(p => p.year === selectedYear)} members={members} selectedMember={selectedMember} onSelectMember={setSelectedMember} />}
+
+            {activeView === 'document' && <DocumentHub documents={documents} onSelectDocument={setSelectedDocument} />}
 
           </div>
         )}
@@ -1011,6 +1054,8 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      {selectedDocument && <DocumentDetail document={selectedDocument} onClose={() => setSelectedDocument(null)} />}
 
       <style>{`
         @keyframes fade-in { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }

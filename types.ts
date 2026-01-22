@@ -55,7 +55,19 @@ export interface Member {
   fullName: string; // From Column C "Name"
   position: string; // From Column J "Job"
   dob: string; // From Column D "Date"
+  phone: string; // From Column E "Phone"
   email: string; // From Column F "Mail"
   startDate: string; // From Column G "Startdate"
   avatar: string; // From Column I "Avatar"
+}
+
+export interface MemberWithStats extends Member {
+  active: number;
+  total: number;
+}
+
+export interface Document {
+  id: string;
+  name: string;
+  description: string;
 }

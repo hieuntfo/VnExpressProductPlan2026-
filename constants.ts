@@ -7,6 +7,9 @@ export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwPQy
 // URL for the new "Member" sheet containing member data. GID changed to 2044840974 as requested.
 export const MEMBERS_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJJ2HYdVoZ45yKhXPX8kydfkXB6eHebun5TNJlcMIFTtbYncCx8Nuq1sphQE0yeB1M9w_aC_QCzB2g/pub?gid=2044840974&single=true&output=tsv";
 
+// URL for the new "File" (Document) sheet.
+export const DOCUMENTS_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJJ2HYdVoZ45yKhXPX8kydfkXB6eHebun5TNJlcMIFTtbYncCx8Nuq1sphQE0yeB1M9w_aC_QCzB2g/pub?gid=298135720&single=true&output=tsv";
+
 export const MOCK_PROJECTS: Project[] = [
   {
     id: '1',
