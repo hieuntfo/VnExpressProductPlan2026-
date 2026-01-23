@@ -89,7 +89,7 @@
         mask-image: radial-gradient(circle at center, white 5%, transparent 60%);
       }
       
-      /* --- NEW: Tech Grid & Scan Lines --- */
+      /* --- Tech Grid & Scan Lines --- */
       .tech-grid {
         position: absolute;
         inset: 0;
@@ -105,22 +105,24 @@
         position: absolute;
         pointer-events: none;
       }
-      /* Horizontal Scan Line */
+      /* Horizontal Scan Line - Refined for subtlety */
       .tech-grid::before {
         left: 0;
         right: 0;
-        height: 2px;
-        background: linear-gradient(to right, transparent, #db2777, transparent);
-        animation: sweep-horizontal 9s linear infinite;
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(219, 39, 119, 0.2), transparent);
+        animation: sweep-horizontal 12s linear infinite;
         animation-delay: 1s;
+        filter: blur(1px);
       }
-      /* Vertical Scan Line */
+      /* Vertical Scan Line - Refined for subtlety */
       .tech-grid::after {
         top: 0;
         bottom: 0;
-        width: 2px;
-        background: linear-gradient(to bottom, transparent, #db2777, transparent);
-        animation: sweep-vertical 11s linear infinite;
+        width: 1px;
+        background: linear-gradient(to bottom, transparent, rgba(219, 39, 119, 0.2), transparent);
+        animation: sweep-vertical 15s linear infinite;
+        filter: blur(1px);
       }
 
 
