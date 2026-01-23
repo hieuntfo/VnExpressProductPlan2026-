@@ -20,7 +20,8 @@ const CACHE_KEY_PROJECTS = 'vne_pms_projects';
 const SESSION_KEY_AUTH = 'vne_pms_auth_session';
 const SESSION_KEY_ROLE = 'vne_pms_role';
 const SESSION_KEY_TIMESTAMP = 'vne_pms_timestamp';
-const SESSION_KEY_USER_NAME = 'vne_pms_username'; // New key for user display name
+const SESSION_KEY_USER_NAME = 'vne_pms_username'; 
+const ANALYTICS_DATA_KEY = 'vne_pms_analytics_data'; // New key for analytics
 
 const LoginKeyVisual = () => (
   <div className="login-keyvisual-container" aria-hidden="true">
@@ -40,33 +41,20 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkTimeAndSetTheme = () => {
-      // Get current time in Vietnam (GMT+7)
       const now = new Date();
       const vnTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
       const currentHour = vnTime.getHours();
-
-      // Light mode from 6 AM to 6 PM (18:00)
       const isDayTime = currentHour >= 6 && currentHour < 18;
-      
       const shouldBeDark = !isDayTime;
       setIsDarkMode(shouldBeDark);
-      
-      if (shouldBeDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      if (shouldBeDark) document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
     };
-
-    // Check immediately on mount
     checkTimeAndSetTheme();
-
-    // Re-check every minute
     const interval = setInterval(checkTimeAndSetTheme, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Manual Toggle (Optional override)
   const toggleTheme = () => {
     setIsDarkMode(prev => {
       const newVal = !prev;
@@ -77,48 +65,31 @@ const App: React.FC = () => {
   };
 
   // --- Authentication State & Logic ---
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-    return sessionStorage.getItem(SESSION_KEY_ROLE) === 'admin';
-  });
-
-  const [userName, setUserName] = useState<string>(() => {
-    return sessionStorage.getItem(SESSION_KEY_USER_NAME) || 'Guest';
-  });
-  
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => sessionStorage.getItem(SESSION_KEY_ROLE) === 'admin');
+  const [userName, setUserName] = useState<string>(() => sessionStorage.getItem(SESSION_KEY_USER_NAME) || 'Guest');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     const auth = sessionStorage.getItem(SESSION_KEY_AUTH) === 'true';
     const timestampStr = sessionStorage.getItem(SESSION_KEY_TIMESTAMP);
-    
-    // If not authenticated or no timestamp, invalid
     if (!auth || !timestampStr) return false;
-    
     const timestamp = parseInt(timestampStr, 10);
     const now = Date.now();
-    
-    // Check if session timed out
     if (now - timestamp > SESSION_TIMEOUT) {
       sessionStorage.clear();
       return false;
     }
-    
     return true;
   });
 
   const [loginTab, setLoginTab] = useState<'user' | 'admin'>('user');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   
-  // --- UI Effects for Auth State ---
   useEffect(() => {
-    // This hook now only manages the body class for contextual styling.
-    if (!isAuthenticated) {
-        document.body.classList.add('login-active');
-    } else {
-        document.body.classList.remove('login-active');
-    }
+    if (!isAuthenticated) document.body.classList.add('login-active');
+    else document.body.classList.remove('login-active');
   }, [isAuthenticated]);
 
-  // --- Login Screen 3D Tilt Effect State ---
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardStyle, setCardStyle] = useState({});
 
@@ -141,26 +112,20 @@ const App: React.FC = () => {
     });
   };
 
-  // --- Active Users Simulation (Admin Only) ---
-  const [activeUserCount, setActiveUserCount] = useState(12); // Initial fake count
+  const [activeUserCount, setActiveUserCount] = useState(12);
 
   useEffect(() => {
     if (!isAdmin || !isAuthenticated) return;
-    
-    // Randomly fluctuate user count to simulate live traffic
     const interval = setInterval(() => {
        setActiveUserCount(prev => {
-          const change = Math.floor(Math.random() * 5) - 2; // Random -2 to +2
+          const change = Math.floor(Math.random() * 5) - 2;
           const next = prev + change;
-          // Keep active users between 5 and 45
           return next < 5 ? 5 : next > 45 ? 45 : next;
        });
     }, 4000);
-
     return () => clearInterval(interval);
   }, [isAdmin, isAuthenticated]);
 
-  // --- Main App State ---
   const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'team' | 'document'>('dashboard');
   const [selectedYear, setSelectedYear] = useState<number>(2026);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -170,7 +135,6 @@ const App: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   
-  // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDept, setFilterDept] = useState<string>('All');
   const [filterType, setFilterType] = useState<string>('All');
@@ -184,11 +148,9 @@ const App: React.FC = () => {
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Edit State (Admin Only)
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<Project>>({});
 
-  // New Project Form State
   const [newProject, setNewProject] = useState<Partial<Project>>({
     year: 2026,
     type: ProjectType.NEW,
@@ -207,7 +169,6 @@ const App: React.FC = () => {
     notes: ''
   });
 
-  // Handle ESC Key to close modals
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -222,30 +183,53 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleEsc);
   }, []);
 
-  // --- Authentication Handler ---
+  // --- Analytics: Track Page Views ---
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    try {
+        const rawData = localStorage.getItem(ANALYTICS_DATA_KEY);
+        const data = rawData ? JSON.parse(rawData) : { accessLog: [], pageviewLog: [] };
+        data.pageviewLog.push({ timestamp: Date.now(), view: activeView });
+        localStorage.setItem(ANALYTICS_DATA_KEY, JSON.stringify(data));
+    } catch (error) {
+        console.error("Failed to log page view:", error);
+    }
+  }, [activeView, isAuthenticated]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
-    const now = Date.now().toString();
+    const now = Date.now();
+
+    const logAccess = (user: string) => {
+        try {
+            const rawData = localStorage.getItem(ANALYTICS_DATA_KEY);
+            const data = rawData ? JSON.parse(rawData) : { accessLog: [], pageviewLog: [] };
+            data.accessLog.push({ timestamp: now, user });
+            localStorage.setItem(ANALYTICS_DATA_KEY, JSON.stringify(data));
+        } catch (error) {
+            console.error("Failed to log access:", error);
+        }
+    };
 
     if (loginTab === 'user') {
       if (passwordInput === "123456") {
         setIsAuthenticated(true);
         setIsAdmin(false);
-        // Generate random User ID (e.g. User 42)
         const randomId = Math.floor(Math.random() * 100) + 1;
         const generatedName = `User ${randomId}`;
         setUserName(generatedName);
         
         sessionStorage.setItem(SESSION_KEY_AUTH, 'true');
         sessionStorage.setItem(SESSION_KEY_ROLE, 'user');
-        sessionStorage.setItem(SESSION_KEY_TIMESTAMP, now);
+        sessionStorage.setItem(SESSION_KEY_TIMESTAMP, now.toString());
         sessionStorage.setItem(SESSION_KEY_USER_NAME, generatedName);
+        logAccess(generatedName);
       } else {
         setLoginError('Mật khẩu User không đúng (Gợi ý: 123456)');
       }
     } else {
-      // Admin Login
       if (passwordInput === "vnexpress") {
         setIsAuthenticated(true);
         setIsAdmin(true);
@@ -254,8 +238,9 @@ const App: React.FC = () => {
 
         sessionStorage.setItem(SESSION_KEY_AUTH, 'true');
         sessionStorage.setItem(SESSION_KEY_ROLE, 'admin');
-        sessionStorage.setItem(SESSION_KEY_TIMESTAMP, now);
+        sessionStorage.setItem(SESSION_KEY_TIMESTAMP, now.toString());
         sessionStorage.setItem(SESSION_KEY_USER_NAME, adminName);
+        logAccess(adminName);
       } else {
         setLoginError('Mật khẩu Admin không đúng');
       }
@@ -270,15 +255,12 @@ const App: React.FC = () => {
     sessionStorage.removeItem(SESSION_KEY_TIMESTAMP);
     sessionStorage.removeItem(SESSION_KEY_USER_NAME);
     setUserName('Guest');
-    setLoginTab('user'); // Reset default tab
+    setLoginTab('user');
     setPasswordInput('');
   };
 
-  // --- Auto Logout Effect ---
   useEffect(() => {
     if (!isAuthenticated) return;
-
-    // Check every minute
     const interval = setInterval(() => {
        const timestampStr = sessionStorage.getItem(SESSION_KEY_TIMESTAMP);
        if (timestampStr) {
@@ -289,14 +271,12 @@ const App: React.FC = () => {
            alert("Phiên đăng nhập đã hết hạn (30 phút). Vui lòng đăng nhập lại.");
          }
        } else {
-         handleLogout(); // Force logout if no timestamp found
+         handleLogout();
        }
-    }, 60000); // 1 minute
-
+    }, 60000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
-  // --- Normalization Helpers ---
   const normalizeStatus = (statusStr: string): ProjectStatus => {
     const s = (statusStr || '').toLowerCase().trim();
     if (s.includes('not started')) return ProjectStatus.NOT_STARTED;
@@ -335,10 +315,8 @@ const App: React.FC = () => {
     return 1;
   };
 
-  // --- Helper: Get Next Project Code ---
   const getNextProjectCode = useCallback(() => {
     if (!projects || projects.length === 0) return "1";
-    // Filter out non-numeric codes to avoid NaN issues, find max, then add 1
     const maxCode = projects.reduce((max, p) => {
         const num = parseInt(p.code, 10);
         return !isNaN(num) && num > max ? num : max;
@@ -346,7 +324,6 @@ const App: React.FC = () => {
     return (maxCode + 1).toString();
   }, [projects]);
 
-  // --- Data Fetching ---
   const fetchDocuments = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
@@ -356,22 +333,19 @@ const App: React.FC = () => {
       if (tsvText.trim().startsWith('<') || tsvText.includes('<!DOCTYPE html')) {
           throw new Error("Received HTML instead of TSV for documents.");
       }
-      const rows = tsvText.split(/\r?\n/).slice(1); // Skip header
+      const rows = tsvText.split(/\r?\n/).slice(1);
       const parsedDocs: Document[] = rows.map((rowStr, index) => {
         const row = rowStr.split('\t');
-        
         let description = (row[3] || '');
-        // TSV from Google Sheets quotes cells with newlines. We need to unquote them.
         if (description.startsWith('"') && description.endsWith('"')) {
             description = description.substring(1, description.length - 1).replace(/""/g, '"');
         }
-
         return {
           id: `doc-${index}`,
-          name: (row[2] || '').trim(), // Column C for Name
-          description: description.trim(), // Column D for Description
+          name: (row[2] || '').trim(),
+          description: description.trim(),
         };
-      }).filter(d => d.name); // Ensure doc has a name
+      }).filter(d => d.name);
       setDocuments(parsedDocs);
     } catch (error) {
       console.error("Document data sync error:", error);
@@ -387,13 +361,12 @@ const App: React.FC = () => {
       if (tsvText.trim().startsWith('<') || tsvText.includes('<!DOCTYPE html')) {
           throw new Error("Received HTML instead of TSV for members. Check sheet URL/publishing settings.");
       }
-      const rows = tsvText.split(/\r?\n/).slice(1); // Skip header
+      const rows = tsvText.split(/\r?\n/).slice(1);
       const parsedMembers: Member[] = rows.map(rowStr => {
         const row = rowStr.split('\t');
         const name = (row[1] || '').trim();
         const fullName = (row[2] || '').trim();
         const avatarFromSheet = (row[8] || '').trim();
-        
         return {
           name: name,
           fullName: fullName,
@@ -404,7 +377,7 @@ const App: React.FC = () => {
           avatar: avatarFromSheet || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || fullName || 'VNE')}&length=1&background=random&color=fff&size=128`,
           position: (row[9] || 'Member').trim(),
         };
-      }).filter(m => m.name); // Ensure member has a name
+      }).filter(m => m.name);
       setMembers(parsedMembers);
     } catch (error) {
       console.error("Member data sync error:", error);
@@ -428,7 +401,6 @@ const App: React.FC = () => {
       let headerRowIndex = -1;
       const colMap: Record<string, number> = {};
 
-      // Robust Header Detection
       for (let i = 0; i < Math.min(rows.length, 20); i++) {
         const rowLower = rows[i].map(c => c.toLowerCase().trim());
         if (rowLower.some(c => c.includes('tên') || c.includes('project') || c.includes('mô tả') || c.includes('description') || c.includes('issue') || c.includes('summary'))) {
@@ -453,22 +425,11 @@ const App: React.FC = () => {
         }
       }
 
-      // FALLBACK INDICES based on specific requirements:
       if (headerRowIndex === -1) {
-         colMap['code'] = 0; 
-         colMap['type'] = 1; 
-         colMap['description'] = 2; 
-         colMap['phase'] = 3;
-         colMap['department'] = 4; 
-         colMap['po'] = 5; 
-         colMap['techHandoff'] = 6; 
-         colMap['releaseDate'] = 9; // Column J
-         colMap['quarter'] = 10; 
-         colMap['pm'] = 12; 
-         colMap['designer'] = 13; 
-         colMap['status'] = 14; // Column O
-         colMap['kpi'] = 18; // Column S
-         headerRowIndex = 0;
+         colMap['code'] = 0; colMap['type'] = 1; colMap['description'] = 2; colMap['phase'] = 3;
+         colMap['department'] = 4; colMap['po'] = 5; colMap['techHandoff'] = 6; colMap['releaseDate'] = 9;
+         colMap['quarter'] = 10; colMap['pm'] = 12; colMap['designer'] = 13; colMap['status'] = 14;
+         colMap['kpi'] = 18; headerRowIndex = 0;
       }
       
       if (colMap['description'] === undefined) colMap['description'] = 2; 
@@ -481,31 +442,16 @@ const App: React.FC = () => {
           const releaseDate = getVal('releaseDate');
           const techHandoff = getVal('techHandoff');
           const quarterStr = getVal('quarter');
-          
-          // --- FIX: Always read status from Column O (index 14) as requested ---
           const statusValue = (row[14] || '').trim();
-
           let year = 2026; 
           const dateStr = (releaseDate + techHandoff + quarterStr).toUpperCase();
           if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.includes('25')) year = 2025;
           else if (dateStr.includes('/24') || dateStr.includes('2024')) year = 2024;
-          
           return {
-            id: `p-${idx}`,
-            code: getVal('code') || `${idx + 1}`,
-            year,
-            description: getVal('description') || 'Untitled Project',
-            type: normalizeType(getVal('type')),
-            department: getVal('department') || 'General',
-            status: normalizeStatus(statusValue),
-            phase: getVal('phase'),
-            quarter: parseQuarter(quarterStr),
-            techHandoff,
-            releaseDate,
-            pm: getVal('pm'),
-            designer: getVal('designer'),
-            po: getVal('po'),
-            kpi: getVal('kpi'), 
+            id: `p-${idx}`, code: getVal('code') || `${idx + 1}`, year, description: getVal('description') || 'Untitled Project',
+            type: normalizeType(getVal('type')), department: getVal('department') || 'General', status: normalizeStatus(statusValue),
+            phase: getVal('phase'), quarter: parseQuarter(quarterStr), techHandoff, releaseDate, pm: getVal('pm'),
+            designer: getVal('designer'), po: getVal('po'), kpi: getVal('kpi'), 
           };
         });
 
@@ -514,7 +460,6 @@ const App: React.FC = () => {
         localStorage.setItem(CACHE_KEY_PROJECTS, JSON.stringify(parsedProjects));
         setLastSyncTime(new Date());
       } else {
-        console.warn("Parsed projects empty. Falling back.");
         throw new Error("Empty parsed data");
       }
     } catch (error) {
@@ -564,20 +509,12 @@ const App: React.FC = () => {
   }, [projects, selectedYear, members]);
 
   const filteredProjects = useMemo(() => {
-    const currentBusinessYear = 2026; // The latest year is considered the "current" year
-
-    // First, determine the base set of projects to show based on the year logic
+    const currentBusinessYear = 2026;
     const baseProjects = projects.filter(p => {
-      // Condition 1: The project's year matches the selected year tab. This is the default case.
       const isProjectInSelectedYear = p.year === selectedYear;
-      
-      // Condition 2: The project is "Re-Open" from a *previous* year, and we are currently viewing the *current* business year.
       const isReopenedFromPast = p.status === ProjectStatus.RE_OPEN && p.year < selectedYear && selectedYear === currentBusinessYear;
-
       return isProjectInSelectedYear || isReopenedFromPast;
     });
-    
-    // Then, apply all the UI filters on this base set
     return baseProjects.filter(p => {
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -603,12 +540,8 @@ const App: React.FC = () => {
         await fetch(GOOGLE_SCRIPT_URL, {
           method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            action: 'add',
-            project_no: newProject.code, 
-            type: newProject.type, 
-            description: newProject.description, 
-            department: newProject.department, 
-            product_manager: newProject.pm 
+            action: 'add', project_no: newProject.code, type: newProject.type, description: newProject.description, 
+            department: newProject.department, product_manager: newProject.pm 
           })
         });
         alert('Đã gửi yêu cầu thêm dự án thành công!');
@@ -622,36 +555,23 @@ const App: React.FC = () => {
     setIsSubmitting(true);
 
     const updatedProject = { ...selectedProject, ...editFormData };
-
-    // 1. Update Local State Optimistically
     setProjects(prev => prev.map(p => p.id === selectedProject.id ? updatedProject : p));
     setSelectedProject(updatedProject);
 
-    // 2. Send to Google Sheet
     if (GOOGLE_SCRIPT_URL) {
        try {
         await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST', 
-          mode: 'no-cors', 
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            action: 'update',
-            // Ensure we trim whitespace from the project code (project_no) to match exact cell value
-            project_no: updatedProject.code.trim(), 
-            status: updatedProject.status,   // Update Col O
-            release_date: updatedProject.releaseDate, // Update Col J
-            kpi: updatedProject.kpi          // Update Col S
+            action: 'update', project_no: updatedProject.code.trim(), status: updatedProject.status,
+            release_date: updatedProject.releaseDate, kpi: updatedProject.kpi
           })
         });
         alert('Cập nhật thành công! Dữ liệu đang được đồng bộ về Sheet (Project Plan).');
-      } catch (error) { 
-        console.error(error); 
-        alert('Lỗi kết nối khi cập nhật. Vui lòng kiểm tra lại mạng.'); 
-      }
+      } catch (error) { console.error(error); alert('Lỗi kết nối khi cập nhật. Vui lòng kiểm tra lại mạng.'); }
     } else {
       alert('Đã cập nhật cục bộ (Chế độ offline).');
     }
-
     setIsSubmitting(false);
     setIsEditing(false);
   };
@@ -660,7 +580,6 @@ const App: React.FC = () => {
     setFilterDept('All'); setFilterType('All'); setFilterPM('All'); setFilterStatus('All'); setFilterQuarter('All'); setSearchQuery('');
   };
 
-  // --- RENDER LOGIN VIEW ---
   if (!isAuthenticated) {
     return (
       <div 
@@ -675,13 +594,10 @@ const App: React.FC = () => {
              style={cardStyle}
              className="relative group transition-all duration-300"
            >
-              {/* Outer Rim Glow - Red Wine Signature */}
               <div className="absolute -inset-[1px] bg-gradient-to-tr from-white/10 via-transparent to-[#9f224e]/50 rounded-[2.5rem] blur-[0.5px]"></div>
               
-              {/* Solid Obsidian Card for Maximum Contrast */}
               <div className="relative bg-[#020617]/98 border border-white/5 rounded-[2.5rem] p-12 md:p-16 shadow-[0_40px_100px_-20px_rgba(0,0,0,1)] overflow-hidden rim-glow">
                   
-                  {/* Top Energy Line - VnE Red */}
                   <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#9f224e] to-transparent opacity-100"></div>
 
                   <div className="text-center mb-12">
@@ -705,14 +621,23 @@ const App: React.FC = () => {
                     <div className="space-y-6">
                       <div className="space-y-3">
                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Establish Access Link</label>
-                         <input 
-                            type="password" 
-                            value={passwordInput} 
-                            onChange={(e) => setPasswordInput(e.target.value)} 
-                            className="w-full px-8 py-6 bg-black/60 border border-white/10 rounded-2xl text-white text-center font-bold tracking-[0.5em] text-2xl focus:ring-2 focus:ring-[#9f224e] focus:border-transparent focus:outline-none transition-all shadow-inner placeholder:tracking-normal placeholder:opacity-20" 
-                            placeholder="••••••" 
-                            autoFocus
-                         />
+                         <div className="relative">
+                           <input 
+                              type={isPasswordVisible ? 'text' : 'password'} 
+                              value={passwordInput} 
+                              onChange={(e) => setPasswordInput(e.target.value)} 
+                              className={`w-full pl-8 pr-16 py-6 bg-black/60 border border-white/10 rounded-2xl text-white font-bold text-2xl focus:ring-2 focus:ring-[#9f224e] focus:border-transparent focus:outline-none transition-all shadow-inner placeholder:tracking-normal placeholder:opacity-20 ${isPasswordVisible ? 'tracking-normal' : 'tracking-[0.5em]'}`} 
+                              placeholder="••••••" 
+                              autoFocus
+                           />
+                           <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute inset-y-0 right-0 flex items-center pr-6 text-slate-500 hover:text-white transition-colors z-20" aria-label={isPasswordVisible ? "Hide password" : "Show password"}>
+                              {isPasswordVisible ? (
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-2.923 3.397-5.21 6.542-6.175M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.582 17.582A4.5 4.5 0 0112 16.5a4.5 4.5 0 01-5.582-1.082M1.175 1.175L.322 2.028m21.356 21.356l-.853-.853M21.972 21.972L2.028 2.028" /></svg>
+                              ) : (
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                              )}
+                           </button>
+                         </div>
                       </div>
                       {loginError && <p className="text-red-400 text-xs text-center font-bold bg-red-400/10 py-4 rounded-xl border border-red-400/20">{loginError}</p>}
                     </div>
@@ -748,7 +673,6 @@ const App: React.FC = () => {
         <header className="flex items-center justify-between mb-10 pb-6 relative z-10 animate-fade-in">
           <div className="flex flex-col">
             <div className="flex items-center gap-4 mb-2">
-              {/* Existing Status Badge */}
               <div className="flex items-center gap-2">
                  <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-amber-400 animate-ping' : 'bg-[#9f224e] shadow-[0_0_8px_#9f224e]'}`}></span>
                  <span className="text-[10px] font-black uppercase text-[#9f224e] tracking-[0.3em]">
@@ -762,7 +686,6 @@ const App: React.FC = () => {
                 </div>
               )}
               
-              {/* Active User Count (Admin Only) */}
               {isAdmin && (
                 <div className="flex items-center gap-2 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
                     <span className="relative flex h-1.5 w-1.5">
@@ -805,7 +728,7 @@ const App: React.FC = () => {
               )}
                {activeView === 'document' && (
                   <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Documents</span>
+                      <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Documents</span>
                       <span className="text-sm font-black text-slate-900 dark:text-white">{documents.length} <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">Records</span></span>
                   </div>
               )}
@@ -813,7 +736,6 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex gap-4 items-center">
-            {/* Dark Mode Toggle */}
             <button onClick={toggleTheme} className="p-4 bg-white/50 dark:bg-[#1e293b]/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-2xl text-slate-500 dark:text-slate-300 hover:text-[#9f224e] transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] active:scale-95 hover:shadow-md" title="Toggle Theme">
                {isDarkMode ? (
                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -825,13 +747,7 @@ const App: React.FC = () => {
             <button onClick={() => { fetchData(false); fetchMembers(); fetchDocuments(); }} disabled={isRefreshing} className={`p-4 bg-white/50 dark:bg-[#1e293b]/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-2xl text-slate-500 dark:text-slate-300 hover:text-[#9f224e] transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] active:scale-95 hover:shadow-md ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`} title="Force Refresh">
               <svg className={`w-6 h-6 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>
-            <button 
-              onClick={() => {
-                setNewProject(prev => ({ ...prev, code: getNextProjectCode() }));
-                setIsAddingProject(true);
-              }} 
-              className="bg-gradient-to-r from-[#9f224e] to-[#db2777] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-[0_10px_20px_rgba(159,34,78,0.3)] flex items-center gap-2 hover:brightness-110 hover:-translate-y-1 transition-all transform active:scale-95 active:translate-y-0 border border-white/10"
-            >
+            <button onClick={() => { setNewProject(prev => ({ ...prev, code: getNextProjectCode() })); setIsAddingProject(true); }} className="bg-gradient-to-r from-[#9f224e] to-[#db2777] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-[0_10px_20px_rgba(159,34,78,0.3)] flex items-center gap-2 hover:brightness-110 hover:-translate-y-1 transition-all transform active:scale-95 active:translate-y-0 border border-white/10">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
               NEW PROJECT
             </button>
@@ -850,11 +766,10 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="animate-fade-in relative z-10">
-            {activeView === 'dashboard' && <Dashboard projects={projects.filter(p => p.year === selectedYear)} />}
+            {activeView === 'dashboard' && <Dashboard projects={projects.filter(p => p.year === selectedYear)} isAdmin={isAdmin} />}
             
             {activeView === 'projects' && (
               <div className="space-y-8">
-                 {/* SEARCH & FILTERS CONTAINER - STICKY */}
                  <div className="sticky top-0 z-30 bg-white/80 dark:bg-[#0b1121]/90 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-3xl p-6 shadow-[0_4px_30px_-4px_rgba(0,0,0,0.05)] space-y-4 hover:bg-white/95 dark:hover:bg-[#0b1121]/95 transition-all duration-300">
                     <div className="relative w-full group">
                         <input type="text" placeholder="Search projects, PM, Department..." className="w-full pl-12 pr-4 py-4 bg-slate-50/50 dark:bg-[#1e293b]/60 border border-slate-200/80 dark:border-slate-600/40 rounded-2xl text-sm outline-none shadow-inner focus:ring-2 focus:ring-[#9f224e] focus:border-[#9f224e] text-slate-900 dark:text-white placeholder-slate-400 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -866,7 +781,6 @@ const App: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                       {/* Reusable Select Component Logic */}
                        {[
                          { label: 'Department', val: filterDept, set: setFilterDept, opts: uniqueDepts, all: 'All Departments' },
                          { label: 'Type', val: filterType, set: setFilterType, opts: Object.values(ProjectType), all: 'All Types' },
@@ -910,7 +824,6 @@ const App: React.FC = () => {
 
       <AIAssistant projects={projects.filter(p => p.year === selectedYear)} />
 
-      {/* MODAL: ADD PROJECT */}
       {isAddingProject && (
         <div className="fixed inset-0 bg-slate-900/50 dark:bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
@@ -960,7 +873,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: PROJECT DETAIL & EDIT */}
       {selectedProject && (
         <div className="fixed inset-0 bg-slate-900/50 dark:bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
@@ -977,17 +889,7 @@ const App: React.FC = () => {
               
               <div className="flex items-center gap-2">
                 {isAdmin && !isEditing && (
-                  <button 
-                    onClick={() => { 
-                      setIsEditing(true); 
-                      setEditFormData({ 
-                        status: selectedProject.status, 
-                        releaseDate: selectedProject.releaseDate, 
-                        kpi: selectedProject.kpi 
-                      }); 
-                    }} 
-                    className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all font-bold text-xs uppercase flex items-center gap-1"
-                  >
+                  <button onClick={() => { setIsEditing(true); setEditFormData({ status: selectedProject.status, releaseDate: selectedProject.releaseDate, kpi: selectedProject.kpi }); }} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all font-bold text-xs uppercase flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     Edit
                   </button>
@@ -1001,55 +903,33 @@ const App: React.FC = () => {
 
             <div className="p-8 space-y-8">
               {isEditing ? (
-                 /* EDIT FORM (ADMIN) */
                  <div className="space-y-6">
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-700/50 rounded-xl text-amber-800 dark:text-amber-200 text-xs font-bold">
                       Admin Mode: You are editing protected fields. Changes will be synced to the Master Sheet.
                     </div>
                     <div>
                       <label className="block text-xs font-black text-slate-400 uppercase mb-2">Status</label>
-                      <select 
-                        value={editFormData.status} 
-                        onChange={(e) => setEditFormData({...editFormData, status: e.target.value as ProjectStatus})}
-                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none"
-                      >
+                      <select value={editFormData.status} onChange={(e) => setEditFormData({...editFormData, status: e.target.value as ProjectStatus})} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none">
                          {Object.values(ProjectStatus).map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-black text-slate-400 uppercase mb-2">Release Date (YYYY-MM-DD)</label>
-                      <input 
-                        type="text" 
-                        value={editFormData.releaseDate} 
-                        onChange={(e) => setEditFormData({...editFormData, releaseDate: e.target.value})}
-                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none"
-                        placeholder="e.g. 2026-12-31"
-                      />
+                      <input type="text" value={editFormData.releaseDate} onChange={(e) => setEditFormData({...editFormData, releaseDate: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none" placeholder="e.g. 2026-12-31"/>
                     </div>
                     <div>
                       <label className="block text-xs font-black text-slate-400 uppercase mb-2">KPI / Goals</label>
-                      <input 
-                        type="text" 
-                        value={editFormData.kpi} 
-                        onChange={(e) => setEditFormData({...editFormData, kpi: e.target.value})}
-                        className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none"
-                        placeholder="e.g. 1M Pageviews"
-                      />
+                      <input type="text" value={editFormData.kpi} onChange={(e) => setEditFormData({...editFormData, kpi: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none" placeholder="e.g. 1M Pageviews"/>
                     </div>
                     
                     <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
                        <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Cancel</button>
-                       <button 
-                         onClick={handleUpdateProject} 
-                         disabled={isSubmitting}
-                         className="px-8 py-2.5 bg-[#9f224e] text-white rounded-xl font-black shadow-lg hover:bg-[#b92b5b] transition-all flex items-center gap-2"
-                       >
+                       <button onClick={handleUpdateProject} disabled={isSubmitting} className="px-8 py-2.5 bg-[#9f224e] text-white rounded-xl font-black shadow-lg hover:bg-[#b92b5b] transition-all flex items-center gap-2">
                          {isSubmitting ? 'Saving...' : 'Save Changes'}
                        </button>
                     </div>
                  </div>
               ) : (
-                /* READ ONLY VIEW */
                 <>
                   <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-6">

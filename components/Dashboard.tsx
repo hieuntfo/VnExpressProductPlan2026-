@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   Cell, Legend, PieChart, Pie, TooltipProps
@@ -8,9 +8,12 @@ import { Project, ProjectStatus, ProjectType } from '../types';
 
 interface DashboardProps {
   projects: Project[];
+  isAdmin: boolean;
 }
 
 const COLORS = ['#9f224e', '#8b5cf6', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#06b6d4', '#64748b'];
+const ANALYTICS_DATA_KEY = 'vne_pms_analytics_data';
+type TimeFrame = 'today' | 'yesterday' | 'week' | 'month';
 
 const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
@@ -32,7 +35,56 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
   return null;
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
+const Dashboard: React.FC<DashboardProps> = ({ projects, isAdmin }) => {
+  const [timeFrame, setTimeFrame] = useState<TimeFrame>('today');
+
+  const analyticsStats = useMemo(() => {
+    const rawData = localStorage.getItem(ANALYTICS_DATA_KEY);
+    if (!rawData) return { users: 0, pageviews: 0 };
+    
+    try {
+        const data = JSON.parse(rawData) as { 
+          accessLog: { timestamp: number, user: string }[],
+          pageviewLog: { timestamp: number, view: string }[]
+        };
+
+        const now = new Date();
+        let startDate = new Date();
+        
+        switch (timeFrame) {
+            case 'today':
+                startDate.setHours(0, 0, 0, 0);
+                break;
+            case 'yesterday':
+                startDate.setDate(now.getDate() - 1);
+                startDate.setHours(0, 0, 0, 0);
+                break;
+            case 'week':
+                const dayOfWeek = now.getDay();
+                startDate.setDate(now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); // Adjust for Sunday
+                startDate.setHours(0, 0, 0, 0);
+                break;
+            case 'month':
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                startDate.setHours(0, 0, 0, 0);
+                break;
+        }
+
+        const startTime = startDate.getTime();
+        
+        const filteredAccess = data.accessLog.filter(log => log.timestamp >= startTime);
+        const filteredPageviews = data.pageviewLog.filter(log => log.timestamp >= startTime);
+
+        const uniqueUsers = new Set(filteredAccess.map(log => log.user)).size;
+
+        return { users: uniqueUsers, pageviews: filteredPageviews.length };
+
+    } catch (error) {
+        console.error("Failed to parse analytics data:", error);
+        return { users: 0, pageviews: 0 };
+    }
+  }, [timeFrame]);
+
   const stats = useMemo(() => {
     return {
       total: projects.length,
@@ -67,6 +119,42 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
 
   return (
     <div className="space-y-8 animate-scale-in">
+      {isAdmin && (
+        <div className="bg-gradient-to-br from-[#111827] to-[#0b1121] p-8 rounded-3xl border border-slate-700/50 shadow-2xl relative overflow-hidden">
+          <div className="absolute -inset-px bg-[radial-gradient(circle_at_top_right,rgba(159,34,78,0.15)_0%,transparent_40%)]"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-sm font-black text-white uppercase tracking-[0.3em]">System Analytics</h3>
+              <div className="flex bg-slate-800/50 p-1 rounded-lg border border-slate-700">
+                {(['today', 'yesterday', 'week', 'month'] as TimeFrame[]).map(tf => (
+                  <button key={tf} onClick={() => setTimeFrame(tf)} className={`px-4 py-1.5 text-[10px] font-bold rounded-md transition-all capitalize ${timeFrame === tf ? 'bg-[#9f224e] text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>{tf}</button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-slate-800/30 p-6 rounded-2xl border border-slate-700/50 flex items-center gap-5">
+                <div className="p-3 bg-[#9f224e]/20 text-[#db2777] rounded-xl border border-[#9f224e]/50">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Users</p>
+                  <p className="text-3xl font-black text-white">{analyticsStats.users}</p>
+                </div>
+              </div>
+              <div className="bg-slate-800/30 p-6 rounded-2xl border border-slate-700/50 flex items-center gap-5">
+                <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/30">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pageviews</p>
+                  <p className="text-3xl font-black text-white">{analyticsStats.pageviews}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard title="Total Projects" value={stats.total} gradient="bg-gradient-to-br from-slate-700 to-slate-900" icon={<svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>} />
         <StatCard title="Completed" value={stats.done} gradient="bg-gradient-to-br from-emerald-600 to-emerald-900" icon={<svg className="w-16 h-16 text-emerald-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
@@ -75,7 +163,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* ANN */}
         <div className="bg-white/60 dark:bg-[#1e293b]/40 backdrop-blur-xl rounded-[2rem] p-8 border border-slate-200 dark:border-slate-700/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-colors hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] duration-500 group">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -105,7 +192,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
           </div>
         </div>
 
-        {/* NEW */}
         <div className="bg-white/60 dark:bg-[#1e293b]/40 backdrop-blur-xl rounded-[2rem] p-8 border border-slate-200 dark:border-slate-700/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-colors hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] duration-500">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -128,7 +214,6 @@ const Dashboard: React.FC<DashboardProps> = ({ projects }) => {
                     <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', color: '#64748b', bottom: 0 }} />
                     </PieChart>
                 </ResponsiveContainer>
-                {/* Donut Center Text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
                     <span className="text-3xl font-black text-slate-800 dark:text-white">{typeStats.newCount}</span>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Projects</span>
