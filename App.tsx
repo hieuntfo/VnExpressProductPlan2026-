@@ -673,16 +673,16 @@ const App: React.FC = () => {
               <div className="corner corner-tr"></div>
               <div className="corner corner-bl"></div>
               <div className="corner corner-br"></div>
-              <div className="absolute -inset-1 bg-gradient-to-r from-vne-primary to-purple-600 rounded-[2.5rem] blur-lg animate-glow-pulse"></div>
-              <div className="relative bg-white/10 dark:bg-slate-900/20 backdrop-blur-xl border border-white/20 dark:border-slate-700/40 rounded-[2.5rem] p-8 md:p-12 shadow-2xl shadow-slate-500/10 dark:shadow-black/50 animate-scale-in">
+              <div className="absolute -inset-1 bg-gradient-to-r from-vne-primary to-vne-primary rounded-[2.5rem] blur-lg animate-glow-pulse"></div>
+              <div className="relative bg-white/30 dark:bg-slate-900/60 backdrop-blur-2xl border border-white/20 dark:border-slate-700/40 rounded-[2.5rem] p-8 md:p-12 shadow-2xl shadow-slate-500/10 dark:shadow-black/50 animate-scale-in">
                   <div className="text-center mb-10">
                       <div className="inline-block relative mb-6 group">
                           <div className="relative mx-auto w-20 h-20 bg-white dark:bg-slate-900 rounded-3xl flex items-center justify-center font-black text-6xl shadow-lg">
-                            <span className="bg-clip-text text-transparent bg-gradient-to-br from-vne-primary to-purple-600 drop-shadow-[0_0_10px_rgba(219,39,119,0.8)]">P</span>
+                            <span className="bg-clip-text text-transparent bg-gradient-to-br from-vne-primary to-vne-primary drop-shadow-[0_0_10px_rgba(159,34,78,0.8)]">P</span>
                           </div>
                       </div>
                       <h1 className="text-3xl font-black text-white tracking-tight relative glitch" data-text="VnExpress">VnExpress</h1>
-                      <p className="text-vne-primary dark:text-vne-secondary font-bold text-xs uppercase tracking-widest mt-2 animate-typing font-mono">Product Management 2026</p>
+                      <p className="text-vne-primary dark:text-vne-primary font-bold text-xs uppercase tracking-widest mt-2 animate-typing font-mono">Product Management 2026</p>
                   </div>
 
                   <form onSubmit={handleLogin} className="space-y-6">
@@ -725,7 +725,7 @@ const App: React.FC = () => {
                     
                     <button 
                       type="submit"
-                      className="w-full py-4 bg-gradient-to-br from-vne-primary to-vne-secondary text-white font-black rounded-xl shadow-lg shadow-vne-primary/20 hover:shadow-xl hover:shadow-vne-primary/40 transform active:scale-95 transition-all duration-300 uppercase tracking-wider text-sm flex items-center justify-center gap-2 group"
+                      className="w-full py-4 bg-gradient-to-br from-vne-primary to-vne-primary text-white font-black rounded-xl shadow-lg shadow-vne-primary/20 hover:shadow-xl hover:shadow-vne-primary/40 transform active:scale-95 transition-all duration-300 uppercase tracking-wider text-sm flex items-center justify-center gap-2 group"
                     >
                       {loginTab === 'user' ? 'Access Dashboard' : 'Admin Console'}
                       <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>

@@ -125,15 +125,15 @@
 
       /* --- LOGIN FORM EFFECTS --- */
       @keyframes corner-pulse {
-        0%, 100% { box-shadow: 0 0 8px 0px rgba(219, 39, 119, 0.8); }
-        50% { box-shadow: 0 0 16px 2px rgba(219, 39, 119, 1); }
+        0%, 100% { box-shadow: 0 0 8px 0px rgba(159, 34, 78, 0.8); }
+        50% { box-shadow: 0 0 16px 2px rgba(159, 34, 78, 1); }
       }
       .corner {
         position: absolute;
         width: 24px;
         height: 24px;
         border-style: solid;
-        border-color: #db2777;
+        border-color: #9f224e;
         z-index: 2;
         animation: corner-pulse 2.5s infinite ease-in-out;
       }
@@ -148,13 +148,13 @@
       }
       @keyframes blink-caret {
         from, to { border-color: transparent }
-        50% { border-color: #db2777; }
+        50% { border-color: #9f224e; }
       }
       .animate-typing {
         display: inline-block;
         overflow: hidden;
         white-space: nowrap;
-        border-right: .15em solid #db2777;
+        border-right: .15em solid #9f224e;
         animation: typing 2s steps(40, end), blink-caret .75s step-end infinite;
       }
       @keyframes glitch {
@@ -174,24 +174,24 @@
       }
       .glitch:before {
         left: 2px;
-        text-shadow: -2px 0 #db2777;
+        text-shadow: -2px 0 #9f224e;
         clip: rect(44px, 450px, 56px, 0);
         animation: glitch 3s infinite linear alternate-reverse;
       }
       .glitch:after {
         left: -2px;
-        text-shadow: -2px 0 #8b5cf6, 2px 2px #db2777;
+        text-shadow: -2px 0 #9f224e, 2px 2px #9f224e;
         clip: rect(86px, 450px, 98px, 0);
         animation: glitch 2s infinite linear alternate-reverse;
       }
       
       @keyframes glow-pulse {
         0%, 100% { 
-          box-shadow: 0 0 25px rgba(219, 39, 119, 0.3); 
+          box-shadow: 0 0 25px rgba(159, 34, 78, 0.3); 
           opacity: 0.8;
         }
         50% { 
-          box-shadow: 0 0 40px rgba(219, 39, 119, 0.5); 
+          box-shadow: 0 0 40px rgba(159, 34, 78, 0.5); 
           opacity: 1;
         }
       }
