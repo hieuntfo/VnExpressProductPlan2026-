@@ -24,7 +24,13 @@ const SESSION_KEY_USER_NAME = 'vne_pms_username'; // New key for user display na
 
 const LoginKeyVisual = () => (
   <div className="login-keyvisual-container" aria-hidden="true">
-    <div className="login-glow-overlay"></div>
+    <div className="tech-grid" />
+    <div className="central-glow" />
+    <div className="light-streamers" />
+    <div className="pulse-ripple" />
+    <div className="pulse-ripple" />
+    <div className="pulse-ripple" />
+    <div className="pulse-ripple" />
   </div>
 );
 
@@ -120,18 +126,18 @@ const App: React.FC = () => {
     if (!cardRef.current) return;
     const { clientX, clientY } = e;
     const { left, top, width, height } = cardRef.current.getBoundingClientRect();
-    const x = (clientX - left - width / 2) / 35; // rotation sensitivity
-    const y = (clientY - top - height / 2) / -35; // invert for natural feel
+    const x = (clientX - left - width / 2) / 45; 
+    const y = (clientY - top - height / 2) / -45; 
     setCardStyle({
-      transform: `perspective(1000px) rotateY(${x}deg) rotateX(${y}deg) scale(1.02)`,
+      transform: `perspective(1200px) rotateY(${x}deg) rotateX(${y}deg) scale(1.02)`,
       transition: 'transform 0.1s ease-out'
     });
   };
   
   const handleMouseLeave = () => {
     setCardStyle({
-      transform: 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1)',
-      transition: 'transform 0.5s ease-in-out'
+      transform: 'perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1)',
+      transition: 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)'
     });
   };
 
@@ -658,83 +664,75 @@ const App: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <div 
-        className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-800 dark:text-slate-200 relative transition-colors duration-700 overflow-hidden"
+        className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-800 dark:text-slate-200 relative transition-colors duration-700 overflow-hidden bg-[#010409]"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
         <LoginKeyVisual />
-        <div className="relative z-10 w-full max-w-md">
+        <div className="relative z-10 w-full max-w-lg">
            <div
              ref={cardRef}
              style={cardStyle}
-             className="relative transition-transform duration-300 ease-out"
+             className="relative group transition-all duration-300"
            >
-              <div className="absolute -inset-1 bg-gradient-to-r from-vne-primary to-vne-primary rounded-[2.5rem] blur-lg animate-glow-pulse"></div>
-              <div className="relative bg-white/30 dark:bg-slate-900/60 backdrop-blur-2xl border border-white/20 dark:border-slate-700/40 rounded-[2.5rem] p-8 md:p-12 shadow-2xl shadow-slate-500/10 dark:shadow-black/50 animate-scale-in">
-                  <div className="text-center mb-10">
-                      <div className="inline-block relative mb-6 group">
-                          <div className="relative mx-auto w-20 h-20 bg-white dark:bg-slate-900 rounded-3xl flex items-center justify-center font-black text-6xl shadow-lg">
-                            <span className="bg-clip-text text-transparent bg-gradient-to-br from-vne-primary to-vne-primary drop-shadow-[0_0_10px_rgba(159,34,78,0.8)]">P</span>
-                          </div>
+              {/* Outer Rim Glow - Red Wine Signature */}
+              <div className="absolute -inset-[1px] bg-gradient-to-tr from-white/10 via-transparent to-[#9f224e]/50 rounded-[2.5rem] blur-[0.5px]"></div>
+              
+              {/* Solid Obsidian Card for Maximum Contrast */}
+              <div className="relative bg-[#020617]/98 border border-white/5 rounded-[2.5rem] p-12 md:p-16 shadow-[0_40px_100px_-20px_rgba(0,0,0,1)] overflow-hidden rim-glow">
+                  
+                  {/* Top Energy Line - VnE Red */}
+                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#9f224e] to-transparent opacity-100"></div>
+
+                  <div className="text-center mb-12">
+                      <div className="inline-block relative mb-8">
+                          <div className="w-20 h-20 bg-[#9f224e] rounded-3xl flex items-center justify-center font-black text-6xl text-white shadow-[0_15px_40px_rgba(159,34,78,0.5)] transform rotate-2">P</div>
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-[#020617]"></div>
                       </div>
-                      <h1 className="text-3xl font-black text-white tracking-tight relative glitch" data-text="VnExpress">VnExpress</h1>
-                      <p className="text-vne-primary dark:text-vne-primary font-bold text-xs uppercase tracking-widest mt-2 animate-typing font-mono">Product Management 2026</p>
+                      <h1 className="text-4xl font-black text-white tracking-tight uppercase leading-none">VnExpress</h1>
+                      <div className="flex flex-col items-center mt-3">
+                         <span className="text-[#9f224e] font-black text-[11px] uppercase tracking-[0.4em] mb-1 animate-typing">Product Management</span>
+                         <div className="h-0.5 w-16 bg-slate-800 rounded-full"></div>
+                      </div>
                   </div>
 
-                  <form onSubmit={handleLogin} className="space-y-6">
-                    <div className="bg-slate-100/10 dark:bg-slate-800/20 p-1.5 rounded-xl flex relative mb-6 backdrop-blur-sm border border-white/10 dark:border-slate-700/30">
-                      <button 
-                          type="button" 
-                          onClick={() => { setLoginTab('user'); setPasswordInput(''); setLoginError(''); }}
-                          className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all z-10 ${loginTab === 'user' ? 'bg-white/80 dark:bg-vne-primary text-slate-900 dark:text-white shadow-md' : 'text-slate-300 dark:text-slate-400 hover:text-white'}`}
-                      >
-                        User
-                      </button>
-                      <button 
-                          type="button" 
-                          onClick={() => { setLoginTab('admin'); setPasswordInput(''); setLoginError(''); }}
-                          className={`flex-1 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all z-10 ${loginTab === 'admin' ? 'bg-white/80 dark:bg-vne-primary text-slate-900 dark:text-white shadow-md' : 'text-slate-300 dark:text-slate-400 hover:text-white'}`}
-                      >
-                        Admin
-                      </button>
+                  <form onSubmit={handleLogin} className="space-y-10">
+                    <div className="bg-white/5 p-1 rounded-2xl flex border border-white/10 relative overflow-hidden shadow-inner">
+                      <button type="button" onClick={() => { setLoginTab('user'); setPasswordInput(''); setLoginError(''); }} className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${loginTab === 'user' ? 'bg-[#9f224e] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Member</button>
+                      <button type="button" onClick={() => { setLoginTab('admin'); setPasswordInput(''); setLoginError(''); }} className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${loginTab === 'admin' ? 'bg-[#9f224e] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>Admin</button>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-2 pl-1">
-                        {loginTab === 'user' ? 'Member Password' : 'Administrator Key'}
-                      </label>
-                      <input 
-                        type="password" 
-                        value={passwordInput}
-                        onChange={(e) => setPasswordInput(e.target.value)}
-                        className="w-full px-4 py-4 bg-slate-50/10 dark:bg-slate-900/30 border border-white/20 dark:border-slate-600/40 rounded-xl text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-vne-primary focus:border-transparent transition-all shadow-inner font-bold tracking-widest"
-                        placeholder="••••••"
-                        autoFocus
-                      />
-                      {loginError && (
-                        <p className="text-red-400 text-xs mt-3 flex items-center gap-1 font-bold animate-pulse">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                          {loginError}
-                        </p>
-                      )}
+                    <div className="space-y-6">
+                      <div className="space-y-3">
+                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Establish Access Link</label>
+                         <input 
+                            type="password" 
+                            value={passwordInput} 
+                            onChange={(e) => setPasswordInput(e.target.value)} 
+                            className="w-full px-8 py-6 bg-black/60 border border-white/10 rounded-2xl text-white text-center font-bold tracking-[0.5em] text-2xl focus:ring-2 focus:ring-[#9f224e] focus:border-transparent focus:outline-none transition-all shadow-inner placeholder:tracking-normal placeholder:opacity-20" 
+                            placeholder="••••••" 
+                            autoFocus
+                         />
+                      </div>
+                      {loginError && <p className="text-red-400 text-xs text-center font-bold bg-red-400/10 py-4 rounded-xl border border-red-400/20">{loginError}</p>}
                     </div>
                     
-                    <button 
-                      type="submit"
-                      className="w-full py-4 bg-gradient-to-br from-vne-primary to-vne-primary text-white font-black rounded-xl shadow-lg shadow-vne-primary/20 hover:shadow-xl hover:shadow-vne-primary/40 transform active:scale-95 transition-all duration-300 uppercase tracking-wider text-sm flex items-center justify-center gap-2 group"
-                    >
-                      {loginTab === 'user' ? 'Access Dashboard' : 'Admin Console'}
-                      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                    <button type="submit" className="w-full py-6 bg-gradient-to-br from-[#9f224e] to-[#db2777] text-white font-black rounded-2xl shadow-[0_20px_40px_-10px_rgba(159,34,78,0.6)] hover:shadow-[0_25px_50px_-5px_rgba(159,34,78,0.8)] hover:brightness-110 active:scale-[0.98] transition-all duration-300 uppercase tracking-[0.3em] text-xs flex items-center justify-center gap-3 border border-white/10">
+                      Link Connection
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                     </button>
                   </form>
               </div>
-            </div>
-            <div className="text-center text-slate-600 text-xs mt-8 font-medium leading-relaxed">
-              <p>© 2026 VnExpress Product</p>
-              <p className="mt-1">
-                Admin: Hiếu Nguyễn - 0902423384 | Email: <a href="mailto:nguyenhieu@vnexpress.net" className="hover:text-vne-primary transition-colors">nguyenhieu@vnexpress.net</a>
-              </p>
-            </div>
+           </div>
+           
+           <div className="mt-16 text-center text-slate-600 text-[10px] font-bold uppercase tracking-[0.3em] space-y-2 opacity-50">
+              <p>© 2026 VnExpress ProductHub System</p>
+              <div className="flex items-center justify-center gap-4">
+                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Signal Active</span>
+                 <span className="w-[1px] h-3 bg-slate-800"></span>
+                 <span>Enterprise Level Protection</span>
+              </div>
+           </div>
         </div>
       </div>
     );
@@ -807,8 +805,8 @@ const App: React.FC = () => {
               )}
                {activeView === 'document' && (
                   <div className="flex flex-col">
-                      <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Documents</span>
-                      <span className="text-sm font-black text-slate-900 dark:text-white">{documents.length} <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">Files</span></span>
+                      <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Total Documents</span>
+                      <span className="text-sm font-black text-slate-900 dark:text-white">{documents.length} <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">Records</span></span>
                   </div>
               )}
             </div>
