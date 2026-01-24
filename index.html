@@ -17,8 +17,10 @@
             },
             colors: {
               vne: {
-                primary: '#9f224e',
-                secondary: '#db2777',
+                primary: '#9f224e', // Main Pink/Magenta
+                secondary: '#db2777', // Brighter Pink
+                accent: '#06b6d4', // Cyan/Teal Accent
+                glow: 'rgba(219, 39, 119, 0.5)',
               }
             }
           }
@@ -27,8 +29,32 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --bg-color-light: #f1f5f9;
+        --bg-color-dark: #0b1121;
+        --card-bg-light: rgba(255, 255, 255, 0.6);
+        --card-bg-dark: rgba(30, 41, 59, 0.5);
+        --border-color-light: rgba(203, 213, 225, 0.5);
+        --border-color-dark: rgba(51, 65, 85, 0.5);
+        --text-color-light: #1e293b;
+        --text-color-dark: #e2e8f0;
+        --vne-primary: #9f224e;
+        --vne-accent: #06b6d4;
+        --glow-color: var(--vne-primary);
+      }
+
       body { 
         font-family: 'Inter', sans-serif; 
+      }
+      .dark {
+        background-color: var(--bg-color-dark);
+      }
+      .light {
+         background-color: var(--bg-color-light);
+      }
+      ::selection {
+        background-color: var(--vne-primary);
+        color: white;
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -39,17 +65,14 @@
         background: transparent; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #94a3b8; 
+        background: rgba(148, 163, 184, 0.5);
         border-radius: 4px;
       }
-      .dark ::-webkit-scrollbar-track {
-        background: #0f172a;
-      }
       .dark ::-webkit-scrollbar-thumb {
-        background: #334155; 
+        background: rgba(51, 65, 85, 0.7);
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #64748b; 
+        background: var(--vne-primary);
       }
       /* Lightbox Animation */
       @keyframes slide-in-right { 
@@ -78,6 +101,27 @@
         opacity: 0.95;
       }
       
+      /* --- MAIN APP BACKGROUND --- */
+      .body-grid-glow {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+      }
+      .dark .body-grid-glow {
+        opacity: 1;
+        background-image:
+          radial-gradient(circle at 100% 0%, hsla(320, 100%, 55%, 0.1), transparent 30%),
+          radial-gradient(circle at 0% 100%, hsla(200, 100%, 50%, 0.1), transparent 30%);
+      }
+      .light .body-grid-glow {
+        opacity: 1;
+         background-image:
+          radial-gradient(circle at 100% 0%, hsla(320, 100%, 85%, 0.4), transparent 40%),
+          radial-gradient(circle at 0% 100%, hsla(200, 100%, 85%, 0.4), transparent 40%);
+      }
+
       /* --- LOGIN FORM EFFECTS --- */
       @keyframes typing {
         from { width: 0 }
@@ -110,6 +154,35 @@
       .rich-text-content u { text-decoration: underline; }
       .dark .rich-text-content a { color: #60a5fa; }
 
+      /* Neon Effect Utilities */
+      .neon-text {
+        color: var(--vne-primary);
+        text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color);
+      }
+      .glow-border {
+        border: 1px solid var(--border-color-dark);
+        box-shadow: 0 0 15px rgba(159, 34, 78, 0.1), 0 0 5px rgba(159, 34, 78, 0.1);
+      }
+      .light .glow-border {
+        border: 1px solid var(--border-color-light);
+         box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+      }
+
+      .gradient-border {
+        border: 1px solid transparent;
+        background-clip: padding-box;
+        position: relative;
+      }
+      .gradient-border::before {
+        content: '';
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        z-index: -1;
+        margin: -1px;
+        border-radius: inherit;
+        background: linear-gradient(to right, var(--vne-primary), var(--vne-accent));
+      }
+
     </style>
   <script type="importmap">
 {
@@ -124,6 +197,7 @@
 </script>
 </head>
   <body class="bg-slate-50 text-slate-800 dark:bg-[#0b1121] dark:text-slate-200 antialiased selection:bg-[#9f224e] selection:text-white transition-colors duration-300">
+    <div class="body-grid-glow"></div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

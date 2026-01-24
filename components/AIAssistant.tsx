@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Project } from '../types';
 import { analyzeProjects } from '../services/geminiService';
@@ -33,15 +32,15 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ projects }) => {
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-[#9f224e] to-[#db2777] text-white rounded-full shadow-[0_0_20px_rgba(159,34,78,0.6)] flex items-center justify-center hover:scale-110 transition-all z-40 border border-white/10">
+      <button onClick={() => setIsOpen(true)} className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-br from-vne-primary to-vne-secondary text-white rounded-full shadow-[0_0_25px_var(--vne-glow)] flex items-center justify-center hover:scale-110 transition-all z-40 border-2 border-white/20">
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
       </button>
 
       {isOpen && (
-        <div className="fixed inset-y-0 right-0 w-96 bg-white dark:bg-[#0f172a] shadow-2xl z-50 flex flex-col border-l border-slate-200 dark:border-slate-700 animate-slide-in">
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-gradient-to-r dark:from-[#1e293b] dark:to-[#0f172a]">
+        <div className="fixed inset-y-0 right-0 w-96 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl shadow-2xl z-[100] flex flex-col border-l border-slate-300/50 dark:border-slate-700/50 animate-slide-in-right glow-border">
+          <div className="p-4 border-b border-slate-300/50 dark:border-slate-700/50 flex items-center justify-between bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#9f224e] to-purple-600 flex items-center justify-center shadow-lg border border-white/10">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-vne-primary to-vne-accent flex items-center justify-center shadow-[0_0_15px_var(--vne-glow)] border border-white/20">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               </div>
               <span className="font-bold tracking-tight text-slate-800 dark:text-white">AI Assistant</span>
@@ -51,13 +50,13 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ projects }) => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-[#0b1121]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-4 rounded-2xl text-[13px] leading-relaxed shadow-md ${
+                <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user' 
-                    ? 'bg-gradient-to-r from-[#9f224e] to-[#be185d] text-white rounded-tr-none' 
-                    : 'bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-tl-none'
+                    ? 'bg-gradient-to-r from-vne-primary to-vne-secondary text-white rounded-tr-none shadow-[0_5px_15px_var(--vne-glow)]' 
+                    : 'bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 rounded-tl-none shadow-lg'
                 }`}>
                   {msg.text}
                 </div>
@@ -65,20 +64,20 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ projects }) => {
             ))}
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 p-4 rounded-2xl rounded-tl-none shadow-sm flex gap-1">
-                  <span className="w-2 h-2 bg-[#9f224e] rounded-full animate-bounce"></span>
-                  <span className="w-2 h-2 bg-[#9f224e] rounded-full animate-bounce delay-100"></span>
-                  <span className="w-2 h-2 bg-[#9f224e] rounded-full animate-bounce delay-200"></span>
+                <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50 p-4 rounded-2xl rounded-tl-none shadow-sm flex gap-1.5">
+                  <span className="w-2 h-2 bg-vne-primary rounded-full animate-bounce"></span>
+                  <span className="w-2 h-2 bg-vne-primary rounded-full animate-bounce delay-100"></span>
+                  <span className="w-2 h-2 bg-vne-primary rounded-full animate-bounce delay-200"></span>
                 </div>
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
 
-          <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1e293b]">
+          <div className="p-4 border-t border-slate-300/50 dark:border-slate-700/50 bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm">
             <div className="flex gap-2">
-              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Ask about projects..." className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[13px] focus:ring-2 focus:ring-[#9f224e] outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" />
-              <button onClick={handleSend} disabled={isTyping} className="p-3 bg-[#9f224e] text-white rounded-xl hover:bg-[#831c42] disabled:opacity-50 transition-all shadow-lg">
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Ask about projects..." className="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300/80 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-vne-primary outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" />
+              <button onClick={handleSend} disabled={isTyping} className="p-3 bg-gradient-to-r from-vne-primary to-vne-secondary text-white rounded-xl hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_0_15px_var(--vne-glow)] border border-white/20">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
               </button>
             </div>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface SidebarProps {
@@ -21,18 +20,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isAdmin, u
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 15.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
     )},
     { id: 'document', label: 'Document', icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2-2z"></path></svg>
     )},
   ];
 
-  // Generate avatar based on dynamic userName
-  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&length=1&background=${isAdmin ? '9f224e' : 'random'}&color=fff&size=128`;
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&length=1&background=${isAdmin ? '9f224e' : '06b6d4'}&color=fff&size=128`;
 
   return (
-    <div className="w-64 bg-white dark:bg-[#111827] text-slate-800 dark:text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-200 dark:border-slate-700/50 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-colors duration-300">
+    <div className="w-64 bg-white/50 dark:bg-slate-900/50 backdrop-blur-2xl text-slate-800 dark:text-white flex-col h-screen fixed left-0 top-0 border-r border-slate-300/50 dark:border-slate-700/50 z-50 transition-colors duration-300 hidden lg:flex">
       <div className="p-8 pb-4">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-[#9f224e] to-[#db2777] w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_15px_rgba(159,34,78,0.5)]">
+          <div className="bg-gradient-to-br from-vne-primary to-vne-secondary w-10 h-10 rounded-xl flex items-center justify-center font-black text-white text-2xl shadow-[0_0_15px_var(--vne-glow)]">
             P
           </div>
           <div className="flex flex-col">
@@ -51,17 +49,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isAdmin, u
                 onClick={() => setActiveView(item.id as any)}
                 className={`w-full flex items-center gap-4 px-5 py-4 rounded-[18px] transition-all duration-300 group relative overflow-hidden ${
                   activeView === item.id 
-                    ? 'text-[#9f224e] dark:text-white bg-slate-50 dark:bg-[#1f293a] shadow-inner' 
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/30'
+                    ? 'text-vne-primary dark:text-white bg-vne-primary/5 dark:bg-vne-primary/10' 
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/30'
                 }`}
               >
-                {/* Active Indicator Bar */}
                 {activeView === item.id && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-[#9f224e] rounded-r-full"></div>
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-vne-primary rounded-r-full shadow-[0_0_10px_var(--vne-primary)]"></div>
                 )}
                 
                 <div className="relative z-10 flex items-center gap-3">
-                    <span className={`${activeView === item.id ? 'text-[#9f224e] dark:text-[#db2777] scale-110' : 'group-hover:text-[#9f224e]'} transition-all duration-300`}>
+                    <span className={`${activeView === item.id ? 'text-vne-primary dark:text-vne-secondary scale-110' : 'group-hover:text-vne-primary'} transition-all duration-300`}>
                         {item.icon}
                     </span>
                     <span className={`font-bold text-sm tracking-wide ${activeView === item.id ? 'font-black' : 'font-medium'}`}>{item.label}</span>
@@ -72,13 +69,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isAdmin, u
         </ul>
       </nav>
 
-      <div className="p-4 m-4 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-[#1f293a] dark:to-[#111827] border border-slate-200 dark:border-slate-700/50 shadow-lg group">
+      <div className="p-4 m-4 rounded-2xl bg-white/50 dark:bg-slate-900/30 backdrop-blur-md border border-slate-300/50 dark:border-slate-700/50 group">
         <div className="flex items-center gap-3 mb-4">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#9f224e] to-purple-500 p-[2px]">
-              <img src={avatarUrl} className="w-full h-full rounded-full border-2 border-white dark:border-[#1e293b]" alt="Member" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-vne-primary to-vne-accent p-[2px]">
+              <img src={avatarUrl} className="w-full h-full rounded-full border-2 border-white dark:border-slate-800/80" alt="Member" />
             </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-[#1e293b]"></div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800/80"></div>
           </div>
           <div className="overflow-hidden">
             <p className="text-sm font-bold truncate text-slate-800 dark:text-white">{userName}</p>
@@ -87,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView, isAdmin, u
         </div>
         <button 
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-600 hover:text-white dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white rounded-xl transition-all duration-200 border border-transparent hover:shadow-md"
+          className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-red-600 bg-red-500/10 hover:bg-red-600 hover:text-white dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white rounded-xl transition-all duration-200 border border-red-500/20"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
           Sign Out

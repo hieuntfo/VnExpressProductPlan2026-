@@ -851,17 +851,17 @@ const App: React.FC = () => {
 
   // --- RENDER MAIN APP ---
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b1121] flex font-sans text-slate-800 dark:text-slate-200 selection:bg-[#9f224e] selection:text-white relative overflow-hidden transition-colors duration-700">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0b1121] flex font-sans text-slate-800 dark:text-slate-200 selection:bg-vne-primary selection:text-white relative transition-colors duration-700">
       
       <Sidebar activeView={activeView} setActiveView={setActiveView} isAdmin={isAdmin} userName={userName} onLogout={handleLogout} />
       
-      <main className="flex-1 ml-64 p-10 relative z-10 transition-all duration-500">
+      <main className="flex-1 lg:ml-64 p-4 sm:p-6 md:p-10 relative z-10 transition-all duration-500">
         <header className="flex items-center justify-between mb-10 pb-6 relative z-10 animate-fade-in">
           <div className="flex flex-col">
             <div className="flex items-center gap-4 mb-2">
               <div className="flex items-center gap-2">
-                 <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-amber-400 animate-ping' : 'bg-[#9f224e] shadow-[0_0_8px_#9f224e]'}`}></span>
-                 <span className="text-[10px] font-black uppercase text-[#9f224e] tracking-[0.3em]">
+                 <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-amber-400 animate-ping' : 'bg-vne-primary shadow-[0_0_8px_var(--vne-primary)]'}`}></span>
+                 <span className="text-[10px] font-black uppercase text-vne-primary tracking-[0.3em]">
                    {isRefreshing ? 'Syncing...' : isAdmin ? 'Admin Mode' : 'Live System'}
                  </span>
               </div>
@@ -895,9 +895,9 @@ const App: React.FC = () => {
             <div className="flex items-center gap-6 mt-6">
               {['dashboard', 'projects'].includes(activeView) && (
                 <>
-                  <div className="flex bg-white/50 dark:bg-[#1e293b]/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 p-1 rounded-xl inline-flex shadow-sm">
+                  <div className="flex bg-slate-200/50 dark:bg-slate-800/30 backdrop-blur-md border border-slate-300 dark:border-slate-700/50 p-1 rounded-xl inline-flex shadow-sm">
                     {[2025, 2026].map(yr => (
-                      <button key={yr} onClick={() => setSelectedYear(yr)} className={`px-8 py-2 text-xs font-black rounded-lg transition-all ${selectedYear === yr ? 'bg-[#9f224e] text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/30'}`}>{yr}</button>
+                      <button key={yr} onClick={() => setSelectedYear(yr)} className={`px-8 py-2 text-xs font-black rounded-lg transition-all ${selectedYear === yr ? 'bg-vne-primary text-white shadow-[0_0_15px_var(--vne-glow)]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>{yr}</button>
                     ))}
                   </div>
                   <div className="flex flex-col border-l border-slate-300 dark:border-slate-700/50 pl-6">
@@ -922,7 +922,7 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex gap-4 items-center">
-            <button onClick={toggleTheme} className="p-4 bg-white/50 dark:bg-[#1e293b]/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-2xl text-slate-500 dark:text-slate-300 hover:text-[#9f224e] transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] active:scale-95 hover:shadow-md" title="Toggle Theme">
+            <button onClick={toggleTheme} className="p-4 bg-white/50 dark:bg-slate-800/30 backdrop-blur-md border border-slate-300 dark:border-slate-700/50 rounded-2xl text-slate-500 dark:text-slate-300 hover:text-vne-primary hover:border-vne-primary/30 transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] active:scale-95 hover:shadow-lg" title="Toggle Theme">
                {isDarkMode ? (
                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                ) : (
@@ -930,11 +930,11 @@ const App: React.FC = () => {
                )}
             </button>
 
-            <button onClick={() => { fetchData(false); fetchMembers(); fetchDocuments(); }} disabled={isRefreshing} className={`p-4 bg-white/50 dark:bg-[#1e293b]/40 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-2xl text-slate-500 dark:text-slate-300 hover:text-[#9f224e] transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] active:scale-95 hover:shadow-md ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`} title="Force Refresh">
+            <button onClick={() => { fetchData(false); fetchMembers(); fetchDocuments(); }} disabled={isRefreshing} className={`p-4 bg-white/50 dark:bg-slate-800/30 backdrop-blur-md border border-slate-300 dark:border-slate-700/50 rounded-2xl text-slate-500 dark:text-slate-300 hover:text-vne-primary hover:border-vne-primary/30 transition-all shadow-[0_8px_30px_rgb(0,0,0,0.04)] active:scale-95 hover:shadow-lg ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`} title="Force Refresh">
               <svg className={`w-6 h-6 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>
             {['dashboard', 'projects'].includes(activeView) && (
-              <button onClick={() => { setNewProject(prev => ({ ...prev, code: getNextProjectCode() })); setIsAddingProject(true); }} className="bg-gradient-to-r from-[#9f224e] to-[#db2777] text-white px-8 py-4 rounded-2xl font-black text-sm shadow-[0_10px_20px_rgba(159,34,78,0.3)] flex items-center gap-2 hover:brightness-110 hover:-translate-y-1 transition-all transform active:scale-95 active:translate-y-0 border border-white/10">
+              <button onClick={() => { setNewProject(prev => ({ ...prev, code: getNextProjectCode() })); setIsAddingProject(true); }} className="bg-gradient-to-r from-vne-primary to-vne-secondary text-white px-8 py-4 rounded-2xl font-black text-sm shadow-[0_10px_20px_var(--vne-glow)] flex items-center gap-2 hover:brightness-110 hover:-translate-y-1 transition-all transform active:scale-95 active:translate-y-0 border border-white/20">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                 NEW PROJECT
               </button>
@@ -951,9 +951,9 @@ const App: React.FC = () => {
         {isLoading && projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[60vh]">
             <div className="relative">
-                <div className="w-20 h-20 border-4 border-slate-300 dark:border-slate-700 border-t-[#9f224e] rounded-full animate-spin"></div>
+                <div className="w-20 h-20 border-4 border-slate-300 dark:border-slate-700 border-t-vne-primary rounded-full animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-10 h-10 bg-[#9f224e]/20 rounded-full blur-xl animate-pulse"></div>
+                    <div className="w-10 h-10 bg-vne-primary/20 rounded-full blur-xl animate-pulse"></div>
                 </div>
             </div>
             <p className="text-slate-500 dark:text-slate-400 font-black mt-8 text-xs uppercase tracking-[0.3em] animate-pulse">Syncing Google Sheets...</p>
@@ -964,13 +964,13 @@ const App: React.FC = () => {
             
             {activeView === 'projects' && (
               <div className="space-y-8">
-                 <div className="sticky top-0 z-30 bg-white/80 dark:bg-[#0b1121]/90 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-3xl p-6 shadow-[0_4px_30px_-4px_rgba(0,0,0,0.05)] space-y-4 hover:bg-white/95 dark:hover:bg-[#0b1121]/95 transition-all duration-300">
+                 <div className="sticky top-6 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-3xl p-6 glow-border space-y-4 transition-all duration-300">
                     <div className="relative w-full group">
-                        <input type="text" placeholder="Search projects, PM, Department..." className="w-full pl-12 pr-4 py-4 bg-slate-50/50 dark:bg-[#1e293b]/60 border border-slate-200/80 dark:border-slate-600/40 rounded-2xl text-sm outline-none shadow-inner focus:ring-2 focus:ring-[#9f224e] focus:border-[#9f224e] text-slate-900 dark:text-white placeholder-slate-400 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                        <svg className="w-5 h-5 absolute left-4 top-4 text-slate-400 group-focus-within:text-[#9f224e] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <input type="text" placeholder="Search projects, PM, Department..." className="w-full pl-12 pr-4 py-4 bg-slate-100/50 dark:bg-slate-800/60 border border-slate-300/80 dark:border-slate-700/40 rounded-2xl text-sm outline-none shadow-inner focus:ring-2 focus:ring-vne-primary focus:border-vne-primary text-slate-900 dark:text-white placeholder-slate-400 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        <svg className="w-5 h-5 absolute left-4 top-4 text-slate-400 group-focus-within:text-vne-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         
                         {(searchQuery || filterDept !== 'All' || filterPM !== 'All' || filterStatus !== 'All' || filterType !== 'All' || filterQuarter !== 'All') && (
-                          <button onClick={resetFilters} className="absolute right-4 top-3 text-[10px] font-bold text-[#9f224e] hover:text-white uppercase tracking-wider bg-[#9f224e]/10 hover:bg-[#9f224e] px-3 py-1.5 rounded-lg transition-all">Clear Filters</button>
+                          <button onClick={resetFilters} className="absolute right-4 top-3 text-[10px] font-bold text-vne-primary hover:text-white uppercase tracking-wider bg-vne-primary/10 hover:bg-vne-primary px-3 py-1.5 rounded-lg transition-all">Clear Filters</button>
                         )}
                     </div>
 
@@ -983,7 +983,7 @@ const App: React.FC = () => {
                        ].map((f, i) => (
                         <div key={i} className="flex flex-col gap-1.5 group">
                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">{f.label}</label>
-                          <select value={f.val} onChange={(e) => f.set(e.target.value)} className="bg-slate-50/50 dark:bg-[#1e293b]/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200/80 dark:border-slate-600/40 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] transition-all cursor-pointer shadow-sm">
+                          <select value={f.val} onChange={(e) => f.set(e.target.value)} className="bg-slate-100/50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-300/80 dark:border-slate-700/40 rounded-xl px-3 py-3 outline-none focus:border-vne-primary focus:ring-1 focus:ring-vne-primary transition-all cursor-pointer shadow-sm">
                             <option value="All">{f.all}</option>
                             {f.opts.map((o: string) => <option key={o} value={o}>{o}</option>)}
                           </select>
@@ -991,7 +991,7 @@ const App: React.FC = () => {
                        ))}
                        <div className="flex flex-col gap-1.5 group">
                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Quarter</label>
-                          <select value={filterQuarter} onChange={(e) => setFilterQuarter(e.target.value)} className="bg-slate-50/50 dark:bg-[#1e293b]/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200/80 dark:border-slate-600/40 rounded-xl px-3 py-3 outline-none focus:border-[#9f224e] focus:ring-1 focus:ring-[#9f224e] transition-all cursor-pointer shadow-sm">
+                          <select value={filterQuarter} onChange={(e) => setFilterQuarter(e.target.value)} className="bg-slate-100/50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-300/80 dark:border-slate-700/40 rounded-xl px-3 py-3 outline-none focus:border-vne-primary focus:ring-1 focus:ring-vne-primary transition-all cursor-pointer shadow-sm">
                             <option value="All">All Quarters</option>
                             {[1,2,3,4].map(q => <option key={q} value={q}>Quarter {q}</option>)}
                           </select>
@@ -1019,9 +1019,9 @@ const App: React.FC = () => {
       <AIAssistant projects={projects.filter(p => p.year === selectedYear)} />
 
       {isAddingProject && (
-        <div className="fixed inset-0 bg-slate-900/50 dark:bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
-            <div className="p-8 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e293b] z-10">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[999] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-700/50 rounded-3xl w-full max-w-2xl shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto glow-border">
+            <div className="p-8 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg z-10">
               <h2 className="text-2xl font-black text-slate-900 dark:text-white">Initialize Project {selectedYear}</h2>
               <button onClick={() => setIsAddingProject(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1035,30 +1035,30 @@ const App: React.FC = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-1">
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">Project No.</label>
-                  <input required type="text" value={newProject.code || ''} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none transition-all" placeholder="Auto-generated" onChange={e => setNewProject({...newProject, code: e.target.value})} />
+                  <input required type="text" value={newProject.code || ''} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-vne-primary outline-none transition-all" placeholder="Auto-generated" onChange={e => setNewProject({...newProject, code: e.target.value})} />
                 </div>
                 <div className="col-span-1">
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">Type</label>
-                  <select className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none transition-all" onChange={e => setNewProject({...newProject, type: e.target.value as ProjectType})}>
+                  <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-vne-primary outline-none transition-all" onChange={e => setNewProject({...newProject, type: e.target.value as ProjectType})}>
                     {Object.values(ProjectType).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">Description</label>
-                  <input required type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none transition-all" placeholder="Detailed project name..." onChange={e => setNewProject({...newProject, description: e.target.value})} />
+                  <input required type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-vne-primary outline-none transition-all" placeholder="Detailed project name..." onChange={e => setNewProject({...newProject, description: e.target.value})} />
                 </div>
                 <div className="col-span-1">
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">Department</label>
-                  <select className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none" onChange={e => setNewProject({...newProject, department: e.target.value})}>{DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}</select>
+                  <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none" onChange={e => setNewProject({...newProject, department: e.target.value})}>{DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}</select>
                 </div>
                 <div className="col-span-1">
                   <label className="block text-xs font-black text-slate-400 uppercase mb-2">PM</label>
-                  <select className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none" onChange={e => setNewProject({...newProject, pm: e.target.value})}>{teamMemberNames.map(m => <option key={m} value={m}>{m}</option>)}</select>
+                  <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white outline-none" onChange={e => setNewProject({...newProject, pm: e.target.value})}>{teamMemberNames.map(m => <option key={m} value={m}>{m}</option>)}</select>
                 </div>
               </div>
-              <div className="flex justify-end gap-4 pt-8 border-t border-slate-200 dark:border-slate-700/50">
+              <div className="flex justify-end gap-4 pt-8 border-t border-slate-200 dark:border-slate-800">
                 <button type="button" onClick={() => setIsAddingProject(false)} className="px-6 py-3 font-black text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">CANCEL</button>
-                <button type="submit" disabled={isSubmitting} className="px-10 py-3 bg-[#9f224e] text-white rounded-xl font-black shadow-[0_0_15px_rgba(159,34,78,0.5)] hover:bg-[#b92b5b] transform active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
+                <button type="submit" disabled={isSubmitting} className="px-10 py-3 bg-gradient-to-r from-vne-primary to-vne-secondary text-white rounded-xl font-black shadow-[0_0_20px_var(--vne-glow)] hover:brightness-110 transform active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
                   {isSubmitting ? 'SAVING...' : 'ADD PROJECT'}
                 </button>
               </div>
@@ -1068,12 +1068,12 @@ const App: React.FC = () => {
       )}
 
       {selectedProject && (
-        <div className="fixed inset-0 bg-slate-900/50 dark:bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
-            <div className="p-8 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e293b] z-10">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[999] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-700/50 rounded-3xl w-full max-w-2xl shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto glow-border">
+            <div className="p-8 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg z-10">
               <div>
                 <div className="flex items-center gap-3">
-                   <span className="text-[10px] font-black text-[#9f224e] uppercase tracking-widest bg-[#9f224e]/10 px-3 py-1 rounded-full border border-[#9f224e]/20">
+                   <span className="text-[10px] font-black text-vne-primary uppercase tracking-widest bg-vne-primary/10 px-3 py-1 rounded-full border border-vne-primary/20">
                      {isEditing ? 'Editing Project' : 'Project Review'}
                    </span>
                    {!isEditing && <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden md:inline-block">Press ESC to close</span>}
@@ -1083,7 +1083,7 @@ const App: React.FC = () => {
               
               <div className="flex items-center gap-2">
                 {isAdmin && !isEditing && (
-                  <button onClick={() => { setIsEditing(true); setEditFormData({ status: selectedProject.status, releaseDate: selectedProject.releaseDate, kpi: selectedProject.kpi }); }} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all font-bold text-xs uppercase flex items-center gap-1">
+                  <button onClick={() => { setIsEditing(true); setEditFormData({ status: selectedProject.status, releaseDate: selectedProject.releaseDate, kpi: selectedProject.kpi }); }} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 rounded-xl transition-all font-bold text-xs uppercase flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     Edit
                   </button>
@@ -1103,22 +1103,22 @@ const App: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-black text-slate-400 uppercase mb-2">Status</label>
-                      <select value={editFormData.status} onChange={(e) => setEditFormData({...editFormData, status: e.target.value as ProjectStatus})} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none">
+                      <select value={editFormData.status} onChange={(e) => setEditFormData({...editFormData, status: e.target.value as ProjectStatus})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-vne-primary outline-none">
                          {Object.values(ProjectStatus).map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-black text-slate-400 uppercase mb-2">Release Date (YYYY-MM-DD)</label>
-                      <input type="text" value={editFormData.releaseDate} onChange={(e) => setEditFormData({...editFormData, releaseDate: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none" placeholder="e.g. 2026-12-31"/>
+                      <input type="text" value={editFormData.releaseDate} onChange={(e) => setEditFormData({...editFormData, releaseDate: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-vne-primary outline-none" placeholder="e.g. 2026-12-31"/>
                     </div>
                     <div>
                       <label className="block text-xs font-black text-slate-400 uppercase mb-2">KPI / Goals</label>
-                      <input type="text" value={editFormData.kpi} onChange={(e) => setEditFormData({...editFormData, kpi: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none" placeholder="e.g. 1M Pageviews"/>
+                      <input type="text" value={editFormData.kpi} onChange={(e) => setEditFormData({...editFormData, kpi: e.target.value})} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-vne-primary outline-none" placeholder="e.g. 1M Pageviews"/>
                     </div>
                     
-                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
                        <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">Cancel</button>
-                       <button onClick={handleUpdateProject} disabled={isSubmitting} className="px-8 py-2.5 bg-[#9f224e] text-white rounded-xl font-black shadow-lg hover:bg-[#b92b5b] transition-all flex items-center gap-2">
+                       <button onClick={handleUpdateProject} disabled={isSubmitting} className="px-8 py-2.5 bg-gradient-to-r from-vne-primary to-vne-secondary text-white rounded-xl font-black shadow-[0_0_20px_var(--vne-glow)] hover:brightness-110 transition-all flex items-center gap-2">
                          {isSubmitting ? 'Saving...' : 'Save Changes'}
                        </button>
                     </div>
@@ -1137,7 +1137,7 @@ const App: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Status</p>
-                        <p className="text-base font-black text-[#9f224e] drop-shadow-[0_0_5px_rgba(159,34,78,0.5)]">{selectedProject.status}</p>
+                        <p className="text-base font-black text-vne-primary drop-shadow-[0_0_5px_var(--vne-glow)]">{selectedProject.status}</p>
                       </div>
                       <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Phase</p>
@@ -1165,7 +1165,7 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
                       <span className="block text-[10px] font-black text-slate-400 uppercase mb-2">Department / Folder</span>
                       {selectedProject.department}
                   </div>
@@ -1177,9 +1177,9 @@ const App: React.FC = () => {
       )}
 
       {isAddingDocument && (
-        <div className="fixed inset-0 bg-slate-900/50 dark:bg-black/90 backdrop-blur-md z-[999] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 rounded-3xl w-full max-w-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.1)] dark:shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto">
-            <div className="p-8 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between sticky top-0 bg-white dark:bg-[#1e293b] z-10">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[999] flex items-center justify-center p-4">
+           <div className="bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-700/50 rounded-3xl w-full max-w-2xl shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto glow-border">
+            <div className="p-8 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg z-10">
               <h2 className="text-2xl font-black text-slate-900 dark:text-white">Create New Document</h2>
               <button onClick={() => setIsAddingDocument(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1194,13 +1194,13 @@ const App: React.FC = () => {
                   type="text"
                   value={newDocumentData.name}
                   onChange={e => setNewDocumentData({ ...newDocumentData, name: e.target.value })}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none transition-all"
+                  className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-vne-primary outline-none transition-all"
                   placeholder="e.g., Product Requirement Document (PRD) for..."
                 />
               </div>
               <div>
                 <label htmlFor="doc_desc" className="block text-xs font-black text-slate-400 uppercase mb-2">Description / Content</label>
-                <div className="mt-1 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-[#9f224e] overflow-hidden">
+                <div className="mt-1 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-vne-primary overflow-hidden">
                   <div className="p-2 border-b border-slate-200 dark:border-slate-700 flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50">
                     <button type="button" title="Bold" onClick={() => document.execCommand('bold')} className="w-8 h-8 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 transition-colors">B</button>
                     <button type="button" title="Italic" onClick={() => document.execCommand('italic')} className="w-8 h-8 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 italic text-slate-700 dark:text-slate-200 transition-colors">I</button>
@@ -1216,14 +1216,14 @@ const App: React.FC = () => {
                     id="doc_desc"
                     ref={descriptionEditorRef}
                     contentEditable
-                    className="w-full p-4 h-56 overflow-y-auto bg-white dark:bg-slate-900 text-sm font-medium text-slate-900 dark:text-white outline-none resize-y"
+                    className="w-full p-4 h-56 overflow-y-auto bg-white dark:bg-slate-800 text-sm font-medium text-slate-900 dark:text-white outline-none resize-y"
                     suppressContentEditableWarning={true}
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-4 pt-8 border-t border-slate-200 dark:border-slate-700/50">
+              <div className="flex justify-end gap-4 pt-8 border-t border-slate-200 dark:border-slate-800">
                 <button type="button" onClick={() => setIsAddingDocument(false)} className="px-6 py-3 font-black text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">CANCEL</button>
-                <button type="submit" disabled={isSubmittingDoc} className="px-10 py-3 bg-[#9f224e] text-white rounded-xl font-black shadow-[0_0_15px_rgba(159,34,78,0.5)] hover:bg-[#b92b5b] transform active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
+                <button type="submit" disabled={isSubmittingDoc} className="px-10 py-3 bg-gradient-to-r from-vne-primary to-vne-secondary text-white rounded-xl font-black shadow-[0_0_20px_var(--vne-glow)] hover:brightness-110 transform active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2">
                   {isSubmittingDoc ? 'SAVING...' : 'CREATE DOCUMENT'}
                 </button>
               </div>
