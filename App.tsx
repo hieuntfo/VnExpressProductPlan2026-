@@ -607,7 +607,6 @@ const App: React.FC = () => {
     }
   };
 
-
   const handleUpdateProject = async () => {
     if (!selectedProject || !isEditing) return;
     setIsSubmitting(true);
@@ -670,7 +669,6 @@ const App: React.FC = () => {
       alert('Đã cập nhật tài liệu thành công (lưu cục bộ).');
     }
   };
-
 
   const resetFilters = () => {
     setFilterDept('All'); setFilterType('All'); setFilterPM('All'); setFilterStatus('All'); setFilterQuarter('All'); setSearchQuery('');
