@@ -558,23 +558,44 @@ const App: React.FC = () => {
 
   const handleAddDocument = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDocumentData.name || !newDocumentData.description) {
-      alert("Vui lòng điền đầy đủ tên và mô tả tài liệu.");
-      return;
+    if (!newDocumentData.name) {
+        alert("Vui lòng điền tên tài liệu.");
+        return;
     }
     setIsSubmittingDoc(true);
 
     const docToAdd: Document = {
-      id: `local-doc-${Date.now()}`,
-      name: newDocumentData.name,
-      description: newDocumentData.description,
+        id: `local-doc-${Date.now()}`,
+        name: newDocumentData.name,
+        description: newDocumentData.description,
     };
 
+    // Optimistic UI update
     setDocuments(prev => [docToAdd, ...prev]);
 
-    await new Promise(res => setTimeout(res, 500));
-    alert('Đã thêm tài liệu mới thành công (lưu cục bộ).');
+    // Sync with Google Sheet
+    if (GOOGLE_SCRIPT_URL) {
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'addDocument',
+                    name: newDocumentData.name,
+                    description: newDocumentData.description
+                })
+            });
+            alert('Tài liệu đã được thêm và đồng bộ lên Google Sheet.');
+        } catch (error) {
+            console.error("Document sync error:", error);
+            alert('Lỗi đồng bộ: Tài liệu đã được thêm cục bộ nhưng không thể gửi lên Google Sheet.');
+        }
+    } else {
+        alert('Đã thêm tài liệu mới thành công (lưu cục bộ).');
+    }
 
+    // Reset state
     setIsSubmittingDoc(false);
     setIsAddingDocument(false);
     setNewDocumentData({ name: '', description: '' });
@@ -633,7 +654,7 @@ const App: React.FC = () => {
 
                   <div className="text-center mb-12">
                       <div className="inline-block relative mb-8">
-                          <div className="w-20 h-20 bg-[#9f224e] rounded-3xl flex items-center justify-center font-black text-6xl text-white shadow-[0_15px_40px_rgba(159,34,78,0.5)] transform rotate-2">P</div>
+                          <div className="w-20 h-20 bg-[#9f224e] rounded-3xl flex items-center justify-center font-black text-6xl text-white shadow-[0_15px_40px_rgba(159,34,78,0.5)]">P</div>
                           <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-[#020617]"></div>
                       </div>
                       <h1 className="text-4xl font-black text-white tracking-tight uppercase leading-none">VnExpress</h1>
@@ -665,7 +686,7 @@ const App: React.FC = () => {
                               {isPasswordVisible ? (
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-2.923 3.397-5.21 6.542-6.175M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.582 17.582A4.5 4.5 0 0112 16.5a4.5 4.5 0 01-5.582-1.082M1.175 1.175L.322 2.028m21.356 21.356l-.853-.853M21.972 21.972L2.028 2.028" /></svg>
                               ) : (
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                               )}
                            </button>
                          </div>
