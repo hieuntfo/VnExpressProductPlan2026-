@@ -152,6 +152,7 @@ const App: React.FC = () => {
   const [isAddingDocument, setIsAddingDocument] = useState(false);
   const [isSubmittingDoc, setIsSubmittingDoc] = useState(false);
   const [newDocumentData, setNewDocumentData] = useState({ name: '', description: '' });
+  const descriptionEditorRef = useRef<HTMLDivElement>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<Project>>({});
@@ -558,7 +559,9 @@ const App: React.FC = () => {
 
   const handleAddDocument = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDocumentData.name || !newDocumentData.description) {
+    const descriptionContent = descriptionEditorRef.current?.innerHTML || '';
+
+    if (!newDocumentData.name || !descriptionContent.trim()) {
         alert("Vui lòng điền đầy đủ Tên và Mô tả cho tài liệu.");
         return;
     }
@@ -567,7 +570,7 @@ const App: React.FC = () => {
     const docToAdd: Document = {
         id: `local-doc-${Date.now()}`,
         name: newDocumentData.name,
-        description: newDocumentData.description,
+        description: descriptionContent,
     };
 
     // Optimistic UI update
@@ -583,7 +586,7 @@ const App: React.FC = () => {
                 body: JSON.stringify({
                     action: 'addDocument',
                     name: newDocumentData.name,
-                    description: newDocumentData.description
+                    description: descriptionContent
                 })
             });
             alert('Tài liệu đã được thêm và đồng bộ lên Google Sheet.');
@@ -595,10 +598,13 @@ const App: React.FC = () => {
         alert('Đã thêm tài liệu mới thành công (lưu cục bộ).');
     }
 
-    // Reset state
+    // Reset state and editor
     setIsSubmittingDoc(false);
     setIsAddingDocument(false);
     setNewDocumentData({ name: '', description: '' });
+    if(descriptionEditorRef.current) {
+        descriptionEditorRef.current.innerHTML = '';
+    }
   };
 
 
@@ -1066,15 +1072,26 @@ const App: React.FC = () => {
               </div>
               <div>
                 <label htmlFor="doc_desc" className="block text-xs font-black text-slate-400 uppercase mb-2">Description / Content</label>
-                <textarea
-                  id="doc_desc"
-                  required
-                  value={newDocumentData.description}
-                  onChange={e => setNewDocumentData({ ...newDocumentData, description: e.target.value })}
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-[#9f224e] outline-none transition-all resize-y"
-                  placeholder="Provide the full content or a detailed description of the document."
-                  rows={10}
-                />
+                <div className="mt-1 border border-slate-200 dark:border-slate-700 rounded-xl focus-within:ring-2 focus-within:ring-[#9f224e] overflow-hidden">
+                  <div className="p-2 border-b border-slate-200 dark:border-slate-700 flex items-center gap-1 bg-slate-50 dark:bg-slate-800/50">
+                    <button type="button" title="Bold" onClick={() => document.execCommand('bold')} className="w-8 h-8 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 font-bold text-slate-700 dark:text-slate-200 transition-colors">B</button>
+                    <button type="button" title="Italic" onClick={() => document.execCommand('italic')} className="w-8 h-8 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 italic text-slate-700 dark:text-slate-200 transition-colors">I</button>
+                    <button type="button" title="Underline" onClick={() => document.execCommand('underline')} className="w-8 h-8 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 underline text-slate-700 dark:text-slate-200 transition-colors">U</button>
+                    <button type="button" title="Insert Link" onClick={() => {
+                        const url = prompt('Enter the URL:');
+                        if (url) document.execCommand('createLink', false, url);
+                    }} className="w-8 h-8 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors">
+                      <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    </button>
+                  </div>
+                  <div
+                    id="doc_desc"
+                    ref={descriptionEditorRef}
+                    contentEditable
+                    className="w-full p-4 h-56 overflow-y-auto bg-white dark:bg-slate-900 text-sm font-medium text-slate-900 dark:text-white outline-none resize-y"
+                    suppressContentEditableWarning={true}
+                  />
+                </div>
               </div>
               <div className="flex justify-end gap-4 pt-8 border-t border-slate-200 dark:border-slate-700/50">
                 <button type="button" onClick={() => setIsAddingDocument(false)} className="px-6 py-3 font-black text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">CANCEL</button>

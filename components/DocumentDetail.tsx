@@ -25,9 +25,10 @@ const DocumentDetail: React.FC<DocumentDetailProps> = ({ document, onClose }) =>
         </header>
         <main className="flex-1 overflow-y-auto p-8">
             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Description</h3>
-            <p className="whitespace-pre-wrap text-slate-700 dark:text-slate-300 leading-relaxed">
-            {document.description}
-            </p>
+            <div 
+              className="rich-text-content whitespace-pre-wrap text-slate-700 dark:text-slate-300 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: document.description }}
+            />
         </main>
         <footer className="p-6 border-t border-slate-200 dark:border-slate-800 flex justify-end bg-slate-50/50 dark:bg-slate-900/30 shrink-0">
           <button onClick={onClose} className="px-6 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-bold rounded-xl transition-colors border border-slate-300 dark:border-slate-600">

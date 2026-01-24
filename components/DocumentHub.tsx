@@ -8,11 +8,6 @@ interface DocumentHubProps {
 }
 
 const DocumentItem: React.FC<{ document: Document; onSelect: () => void; }> = ({ document, onSelect }) => {
-  const needsTruncation = document.description.split(' ').length > 50;
-  const truncatedDesc = needsTruncation 
-    ? document.description.split(' ').slice(0, 50).join(' ') + '...'
-    : document.description;
-
   return (
     <div className="grid grid-cols-[minmax(0,_1fr)_minmax(0,_2fr)] border-b border-slate-200 dark:border-slate-700/50 group">
       <div className="py-4 px-6 font-medium text-slate-700 dark:text-slate-200 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/20 transition-colors duration-200 flex items-start gap-3">
@@ -20,12 +15,13 @@ const DocumentItem: React.FC<{ document: Document; onSelect: () => void; }> = ({
         <span className="cursor-pointer hover:text-[#9f224e]" onClick={onSelect}>{document.name}</span>
       </div>
       <div className="py-4 px-6 text-slate-600 dark:text-slate-400 border-l border-slate-200 dark:border-slate-700/50 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/20 transition-colors duration-200">
-        <p className="whitespace-pre-wrap">{truncatedDesc}</p>
-        {needsTruncation && (
-           <button onClick={onSelect} className="text-sm font-bold text-[#9f224e] hover:underline mt-2">
-             See more &raquo;
-           </button>
-        )}
+        <div
+          className="rich-text-content line-clamp-3"
+          dangerouslySetInnerHTML={{ __html: document.description }}
+        />
+        <button onClick={onSelect} className="text-sm font-bold text-[#9f224e] hover:underline mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          See more &raquo;
+        </button>
       </div>
     </div>
   );
