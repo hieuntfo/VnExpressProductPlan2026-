@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { DEPARTMENTS, MOCK_PROJECTS, GOOGLE_SCRIPT_URL, MEMBERS_DATA_URL, DOCUMENTS_DATA_URL } from './constants';
 import { Project, ProjectStatus, ProjectType, Member, MemberWithStats, Document } from './types';
@@ -23,11 +22,141 @@ const SESSION_KEY_TIMESTAMP = 'vne_pms_timestamp';
 const SESSION_KEY_USER_NAME = 'vne_pms_username'; 
 const ANALYTICS_DATA_KEY = 'vne_pms_analytics_data'; // New key for analytics
 
-const LoginKeyVisual = () => (
-  <div className="login-keyvisual-container" aria-hidden="true">
-    <div className="spotlight"></div>
-  </div>
-);
+const LoginKeyVisual = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let w: number, h: number, frame = 0;
+    let animationFrameId: number;
+
+    const resizeCanvas = () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    };
+
+    const stars = Array.from({ length: 200 }, () => ({
+      x: Math.random() * 2 - 1,
+      y: Math.random() * 2 - 1,
+      z: Math.random() * 2
+    }));
+
+    const draw = () => {
+      frame++;
+      ctx.clearRect(0, 0, w, h);
+
+      // Sky
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, '#790937');
+      sky.addColorStop(0.5, '#9f224e');
+      sky.addColorStop(1, '#ff3366');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      // Stars
+      ctx.save();
+      ctx.translate(w / 2, h / 2);
+      stars.forEach(star => {
+        const x = star.x * w;
+        const y = star.y * h;
+        const z = star.z;
+        const size = (1 - z / 2) * 2;
+        ctx.fillStyle = `hsla(0, 100%, 100%, ${Math.abs(Math.sin(frame / 100 + star.z * Math.PI)) * 0.8 + 0.2})`;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      const horizon = h * 0.6;
+      const mountainColor = 'rgba(255, 51, 102, 0.4)';
+
+      // Mountains
+      for (let i = 1; i <= 3; i++) {
+        ctx.strokeStyle = `rgba(255, 51, 102, ${0.5 - i * 0.1})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= w; x += 10) {
+          const y = horizon - 50 / i - Math.sin((x + frame * i * 2) / (200 / i)) * (80 / i);
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      // Grid Floor
+      ctx.save();
+      ctx.translate(w / 2, horizon);
+      ctx.strokeStyle = mountainColor;
+      for (let i = 0; i < 50; i++) {
+        const p = i / 50;
+        const y = p * h * 0.4;
+        const x = y * (w / h) * 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-x, y);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+      for (let i = -10; i <= 10; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * 50, 0);
+        ctx.lineTo(i * w * 0.1, h * 0.4);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Neon Triangle
+      ctx.save();
+      ctx.translate(w / 2, h * 0.5);
+      const size = Math.min(w, h) * 0.3;
+      const angle = (Math.PI * 2) / 3;
+      const glow = Math.sin(frame / 60) * 5 + 20;
+
+      ctx.shadowColor = '#fff';
+      ctx.shadowBlur = glow;
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 4;
+      
+      ctx.beginPath();
+      for (let i = 0; i < 3; i++) {
+        const x = Math.cos(angle * i + Math.PI / 2) * size;
+        const y = Math.sin(angle * i + Math.PI / 2) * size;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      
+      ctx.shadowBlur = glow * 2;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+      ctx.restore();
+      
+      animationFrameId = requestAnimationFrame(draw);
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
+
+  return (
+    <div className="login-keyvisual-container" aria-hidden="true">
+      <canvas ref={canvasRef} />
+    </div>
+  );
+};
+
 
 const App: React.FC = () => {
   // --- Theme State (Auto-VN Time) ---
@@ -78,41 +207,6 @@ const App: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  
-  useEffect(() => {
-    if (!isAuthenticated) {
-      document.body.classList.add('login-active');
-    } else {
-      document.body.classList.remove('login-active');
-    }
-  }, [isAuthenticated]);
-
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [cardStyle, setCardStyle] = useState({});
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // 3D card effect logic
-    if (cardRef.current) {
-      const { clientX, clientY } = e;
-      const { left, top, width, height } = cardRef.current.getBoundingClientRect();
-      const x = (clientX - left - width / 2) / 45; 
-      const y = (clientY - top - height / 2) / -45; 
-      setCardStyle({
-        transform: `perspective(1200px) rotateY(${x}deg) rotateX(${y}deg) scale(1.02)`,
-        transition: 'transform 0.1s ease-out'
-      });
-    }
-    // New background spotlight logic
-    document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
-    document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
-  };
-  
-  const handleMouseLeave = () => {
-    setCardStyle({
-      transform: 'perspective(1200px) rotateY(0deg) rotateX(0deg) scale(1)',
-      transition: 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)'
-    });
-  };
 
   const [activeUserCount, setActiveUserCount] = useState(12);
 
@@ -680,19 +774,15 @@ const App: React.FC = () => {
     return (
       <div 
         className="min-h-screen flex items-center justify-center p-4 font-sans text-slate-800 dark:text-slate-200 relative transition-colors duration-700 overflow-hidden bg-[#010409]"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
       >
         <LoginKeyVisual />
         <div className="relative z-10 w-full max-w-lg">
            <div
-             ref={cardRef}
-             style={cardStyle}
              className="relative group transition-all duration-300"
            >
               <div className="absolute -inset-[1px] bg-gradient-to-tr from-white/10 via-transparent to-[#9f224e]/50 rounded-[2.5rem] blur-[0.5px]"></div>
               
-              <div className="relative bg-[#020617]/98 border border-white/5 rounded-[2.5rem] p-12 md:p-16 shadow-[0_40px_100px_-20px_rgba(0,0,0,1)] overflow-hidden rim-glow">
+              <div className="relative bg-[#020617]/90 backdrop-blur-sm border border-white/5 rounded-[2.5rem] p-12 md:p-16 shadow-[0_40px_100px_-20px_rgba(0,0,0,1)] overflow-hidden">
                   
                   <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#9f224e] to-transparent opacity-100"></div>
 

@@ -30,10 +30,6 @@
       body { 
         font-family: 'Inter', sans-serif; 
       }
-      body.login-active {
-        --mouse-x: 50vw;
-        --mouse-y: 50vh;
-      }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
         width: 8px;
@@ -64,55 +60,22 @@
         animation: slide-in-right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; 
       }
 
-      /* --- NEW ARTISTIC LOGIN BACKGROUND --- */
+      /* --- NEW RETROWAVE LOGIN BACKGROUND --- */
       .login-keyvisual-container {
         position: fixed;
         inset: 0;
-        background-color: #02040a;
+        background-color: #000;
         overflow: hidden;
         z-index: 0;
       }
-      
-      .login-keyvisual-container::before,
-      .login-keyvisual-container::after {
-        content: '';
+
+      .login-keyvisual-container > canvas {
         position: absolute;
-        inset: -100%; /* Oversize to prevent edges from showing during rotation */
-        z-index: 1;
-        opacity: 0.5;
-        mix-blend-mode: screen;
-      }
-
-      /* Cool tones (Teal/Blue) - Left side */
-      .login-keyvisual-container::before {
-        background: conic-gradient(from 150deg at 35% 65%, transparent 0, #0d9488 10deg, #1d4ed8 40deg, transparent 120deg);
-        animation: rotate-slow 80s linear infinite;
-      }
-
-      /* Warm tones (Orange/Red/Magenta) - Right/Center */
-      .login-keyvisual-container::after {
-        background: conic-gradient(from -30deg at 65% 35%, transparent 0, #f97316 15deg, #be185d, #ec4899 50deg, transparent 120deg);
-        animation: rotate-slow 100s linear infinite reverse;
-      }
-
-      .spotlight {
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), hsla(0, 0%, 100%, 0.1), transparent 50%);
-        mix-blend-mode: color-dodge;
-        z-index: 2;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.5s;
-      }
-
-      body.login-active:hover .spotlight {
-        opacity: 1;
-      }
-
-      @keyframes rotate-slow {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.95;
       }
       
       /* --- LOGIN FORM EFFECTS --- */
@@ -130,12 +93,6 @@
         white-space: nowrap;
         border-right: .15em solid #9f224e;
         animation: typing 2.5s steps(40, end), blink-caret .75s step-end infinite;
-      }
-      
-      /* Rim light effect for the card */
-      .rim-glow {
-        box-shadow: 0 0 30px rgba(159, 34, 78, 0.15);
-        border: 1px solid rgba(159, 34, 78, 0.3);
       }
 
       /* Rich Text and Line Clamp styles */
