@@ -633,6 +633,44 @@ const App: React.FC = () => {
     setIsSubmitting(false);
     setIsEditing(false);
   };
+  
+  const handleUpdateDocument = async (originalName: string, updatedData: { name: string; description: string }) => {
+    if (!selectedDocument) return;
+
+    const docToUpdate: Document = {
+      ...selectedDocument,
+      name: updatedData.name,
+      description: updatedData.description,
+    };
+
+    // Optimistic UI update
+    setDocuments(prev => prev.map(d => d.id === selectedDocument.id ? docToUpdate : d));
+    setSelectedDocument(docToUpdate);
+
+    // Sync with Google Sheet
+    if (GOOGLE_SCRIPT_URL) {
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_document',
+            name: originalName, // Use original name to find the row
+            newName: updatedData.name,
+            newDescription: updatedData.description
+          })
+        });
+        alert('Tài liệu đã được cập nhật và đồng bộ lên Google Sheet.');
+      } catch (error) {
+        console.error("Document update error:", error);
+        alert('Lỗi đồng bộ: Tài liệu đã được cập nhật cục bộ nhưng không thể gửi lên Google Sheet.');
+      }
+    } else {
+      alert('Đã cập nhật tài liệu thành công (lưu cục bộ).');
+    }
+  };
+
 
   const resetFilters = () => {
     setFilterDept('All'); setFilterType('All'); setFilterPM('All'); setFilterStatus('All'); setFilterQuarter('All'); setSearchQuery('');
@@ -1104,7 +1142,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {selectedDocument && <DocumentDetail document={selectedDocument} onClose={() => setSelectedDocument(null)} />}
+      {selectedDocument && <DocumentDetail document={selectedDocument} onClose={() => setSelectedDocument(null)} onUpdate={handleUpdateDocument} isAdmin={isAdmin} />}
 
       <style>{`
         @keyframes fade-in { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
