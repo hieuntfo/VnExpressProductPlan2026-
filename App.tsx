@@ -25,13 +25,7 @@ const ANALYTICS_DATA_KEY = 'vne_pms_analytics_data'; // New key for analytics
 
 const LoginKeyVisual = () => (
   <div className="login-keyvisual-container" aria-hidden="true">
-    <div className="tech-grid" />
-    <div className="central-glow" />
-    <div className="light-streamers" />
-    <div className="pulse-ripple" />
-    <div className="pulse-ripple" />
-    <div className="pulse-ripple" />
-    <div className="pulse-ripple" />
+    <div className="spotlight"></div>
   </div>
 );
 
@@ -86,23 +80,31 @@ const App: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   
   useEffect(() => {
-    if (!isAuthenticated) document.body.classList.add('login-active');
-    else document.body.classList.remove('login-active');
+    if (!isAuthenticated) {
+      document.body.classList.add('login-active');
+    } else {
+      document.body.classList.remove('login-active');
+    }
   }, [isAuthenticated]);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardStyle, setCardStyle] = useState({});
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const { clientX, clientY } = e;
-    const { left, top, width, height } = cardRef.current.getBoundingClientRect();
-    const x = (clientX - left - width / 2) / 45; 
-    const y = (clientY - top - height / 2) / -45; 
-    setCardStyle({
-      transform: `perspective(1200px) rotateY(${x}deg) rotateX(${y}deg) scale(1.02)`,
-      transition: 'transform 0.1s ease-out'
-    });
+    // 3D card effect logic
+    if (cardRef.current) {
+      const { clientX, clientY } = e;
+      const { left, top, width, height } = cardRef.current.getBoundingClientRect();
+      const x = (clientX - left - width / 2) / 45; 
+      const y = (clientY - top - height / 2) / -45; 
+      setCardStyle({
+        transform: `perspective(1200px) rotateY(${x}deg) rotateX(${y}deg) scale(1.02)`,
+        transition: 'transform 0.1s ease-out'
+      });
+    }
+    // New background spotlight logic
+    document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+    document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
   };
   
   const handleMouseLeave = () => {
