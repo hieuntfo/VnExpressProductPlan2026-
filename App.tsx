@@ -561,28 +561,22 @@ const App: React.FC = () => {
           const statusValue = getVal('status');
           
           let year: number;
-
-          // Priority 1: Explicit year in description (e.g., "Project Name 2025")
-          const yearInDescMatch = description.match(/\b(202[4-6])\b/);
-          if (yearInDescMatch) {
-              year = parseInt(yearInDescMatch[0], 10);
-          } 
-          // Priority 2: Year in Quarter column (e.g., "Q1/25")
-          else if (quarterStr.includes('/25') || quarterStr.endsWith(' 25')) {
-              year = 2025;
-          } else if (quarterStr.includes('/24') || quarterStr.endsWith(' 24')) {
+          const descLower = description.toLowerCase();
+          
+          if (descLower.includes('2024')) {
               year = 2024;
-          }
-          // Priority 3: Year in date-related columns
-          else {
-              const dateStr = (releaseDate + techHandoff).toUpperCase();
-              if (dateStr.includes('/25') || dateStr.includes('2025')) {
+          } else if (descLower.includes('2025')) {
+              year = 2025;
+          } else if (descLower.includes('2026')) {
+              year = 2026;
+          } else {
+              const dateStr = (releaseDate + techHandoff + quarterStr).toUpperCase();
+              if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.includes('25')) {
                   year = 2025;
               } else if (dateStr.includes('/24') || dateStr.includes('2024')) {
                   year = 2024;
               } else {
-                  // Final fallback to 2026 for all other cases
-                  year = 2026;
+                  year = 2026; // Final fallback
               }
           }
 
@@ -939,7 +933,7 @@ const App: React.FC = () => {
               {['dashboard', 'projects'].includes(activeView) && (
                 <>
                   <div className="flex bg-slate-200/50 dark:bg-slate-800/30 backdrop-blur-md border border-slate-300 dark:border-slate-700/50 p-1 rounded-xl inline-flex shadow-sm">
-                    {[2024, 2025, 2026].map(yr => (
+                    {[2025, 2026].map(yr => (
                       <button key={yr} onClick={() => setSelectedYear(yr)} className={`px-8 py-2 text-xs font-black rounded-lg transition-all ${selectedYear === yr ? 'bg-vne-primary text-white shadow-[0_0_15px_var(--vne-glow)]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>{yr}</button>
                     ))}
                   </div>
