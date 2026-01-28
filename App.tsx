@@ -553,17 +553,35 @@ const App: React.FC = () => {
            const desc = (r[colMap['description']] || '').trim();
            return desc.length > 0 && desc.toLowerCase() !== 'description' && desc.toLowerCase() !== 'issue description' && desc.toLowerCase() !== 'tên dự án';
         }).map((row, idx) => {
-          const getVal = (key: string) => (row[colMap[key]] || '').trim();
+          const getVal = (key: string) => (colMap[key] !== undefined ? (row[colMap[key]] || '').trim() : '');
+          const description = getVal('description');
           const releaseDate = getVal('releaseDate');
           const techHandoff = getVal('techHandoff');
           const quarterStr = getVal('quarter');
           const statusValue = getVal('status');
-          let year = 2026; 
-          const dateStr = (releaseDate + techHandoff + quarterStr).toUpperCase();
-          if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.includes('25')) year = 2025;
-          else if (dateStr.includes('/24') || dateStr.includes('2024')) year = 2024;
+          
+          let year: number;
+          const descLower = description.toLowerCase();
+          
+          if (descLower.includes('2024')) {
+              year = 2024;
+          } else if (descLower.includes('2025')) {
+              year = 2025;
+          } else if (descLower.includes('2026')) {
+              year = 2026;
+          } else {
+              const dateStr = (releaseDate + techHandoff + quarterStr).toUpperCase();
+              if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.includes('25')) {
+                  year = 2025;
+              } else if (dateStr.includes('/24') || dateStr.includes('2024')) {
+                  year = 2024;
+              } else {
+                  year = 2026; // Final fallback
+              }
+          }
+
           return {
-            id: `p-${idx}`, code: getVal('code') || `${idx + 1}`, year, description: getVal('description') || 'Untitled Project', priority: normalizePriority(getVal('priority')),
+            id: `p-${idx}`, code: getVal('code') || `${idx + 1}`, year, description: description || 'Untitled Project', priority: normalizePriority(getVal('priority')),
             type: normalizeType(getVal('type')), department: getVal('department') || 'General', status: normalizeStatus(statusValue),
             phase: getVal('phase'), quarter: parseQuarter(quarterStr), techHandoff, releaseDate, pm: getVal('pm'),
             designer: getVal('designer'), po: getVal('po'), kpi: getVal('kpi'), 
