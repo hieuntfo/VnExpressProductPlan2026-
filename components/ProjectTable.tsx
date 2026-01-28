@@ -1,5 +1,5 @@
 import React from 'react';
-import { Project, ProjectStatus } from '../types';
+import { Project, ProjectStatus, ProjectPriority } from '../types';
 
 interface ProjectTableProps {
   projects: Project[];
@@ -35,11 +35,35 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, selectedYear, onS
     };
 
     return (
-      <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap dark:${styles[status]} ${lightStyles[status]}`}>
+      <span className={`px-2 py-1 rounded-full text-[9px] font-bold border uppercase tracking-wider whitespace-nowrap dark:${styles[status]} ${lightStyles[status]}`}>
         {status}
       </span>
     );
   };
+  
+  const getPriorityBadge = (priority: ProjectPriority) => {
+    if (priority === ProjectPriority.NONE) return null;
+    const styles: Record<ProjectPriority, string> = {
+      [ProjectPriority.HIGHEST]: 'text-rose-300 bg-rose-500/10 border-rose-500/20',
+      [ProjectPriority.HIGH]: 'text-amber-300 bg-amber-500/10 border-amber-500/20',
+      [ProjectPriority.MEDIUM]: 'text-sky-300 bg-sky-500/10 border-sky-500/20',
+      [ProjectPriority.LOW]: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
+      [ProjectPriority.NONE]: 'hidden',
+    };
+    const lightStyles: Record<ProjectPriority, string> = {
+      [ProjectPriority.HIGHEST]: 'text-rose-600 bg-rose-100 border-rose-200',
+      [ProjectPriority.HIGH]: 'text-amber-600 bg-amber-100 border-amber-200',
+      [ProjectPriority.MEDIUM]: 'text-sky-600 bg-sky-100 border-sky-200',
+      [ProjectPriority.LOW]: 'text-slate-500 bg-slate-100 border-slate-200',
+      [ProjectPriority.NONE]: 'hidden',
+    };
+    return (
+      <span className={`px-2 py-1 rounded-full text-[9px] font-bold border uppercase tracking-wider whitespace-nowrap dark:${styles[priority]} ${lightStyles[priority]}`}>
+        P{ { [ProjectPriority.HIGHEST]: 0, [ProjectPriority.HIGH]: 1, [ProjectPriority.MEDIUM]: 2, [ProjectPriority.LOW]: 3 }[priority] } - {priority}
+      </span>
+    );
+  };
+
 
   const getQuarterBadge = (q: number) => (
     <span className="bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-700/80 dark:text-slate-200 dark:border-slate-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase border shadow-sm">
@@ -57,7 +81,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, selectedYear, onS
               <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Project / Description</th>
               <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Dept / Type</th>
               <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">PM / Request</th>
-              <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Status</th>
+              <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Status / Priority</th>
               <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em]">Timeline</th>
               <th className="px-6 py-5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.1em] text-right">Action</th>
             </tr>
@@ -95,7 +119,10 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, selectedYear, onS
                   </div>
                 </td>
                 <td className="px-6 py-5">
-                  <div className="flex flex-col gap-1.5 items-start">{getStatusBadge(project.status)}</div>
+                  <div className="flex flex-col gap-1.5 items-start">
+                    {getStatusBadge(project.status)}
+                    {getPriorityBadge(project.priority)}
+                  </div>
                 </td>
                 <td className="px-6 py-5">
                   <div className="flex flex-col text-[11px] text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">

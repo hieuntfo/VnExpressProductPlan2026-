@@ -1,5 +1,6 @@
 
-import { Project, ProjectStatus, ProjectType } from './types';
+
+import { Project, ProjectStatus, ProjectType, ProjectPriority } from './types';
 
 // URL Google Apps Script Web App để nhận dữ liệu POST từ form thêm dự án
 export const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_usOGCDC1Tj6FfSB6nHEAtveU7j8TYEHHqJpuyX8T3v76qsp4Pb7tD5KksA7Q9Vn6/exec"; 
@@ -21,6 +22,8 @@ export const MOCK_PROJECTS: Project[] = [
     status: ProjectStatus.IN_PROGRESS,
     phase: 'Thiết kế Landing Page',
     quarter: 1,
+    // FIX: Added missing 'priority' property to conform to the Project type.
+    priority: ProjectPriority.HIGH,
     techHandoff: '2026-03-15',
     releaseDate: '2026-04-01',
     pm: 'HieuNT',

@@ -1,4 +1,3 @@
-
 export enum ProjectStatus {
   NOT_STARTED = 'Not Started',
   IN_PROGRESS = 'In Progress',
@@ -18,6 +17,15 @@ export enum ProjectType {
   NEW = 'New' // NEW
 }
 
+// NEW ENUM
+export enum ProjectPriority {
+  HIGHEST = 'Highest', // P0
+  HIGH = 'High',       // P1
+  MEDIUM = 'Medium',     // P2
+  LOW = 'Low',         // P3
+  NONE = 'None'        // Default
+}
+
 export interface Project {
   id: string;
   year: number;
@@ -28,6 +36,7 @@ export interface Project {
   status: ProjectStatus;
   phase: string;
   quarter: number;
+  priority: ProjectPriority; // NEW FIELD
   techHandoff: string;
   releaseDate: string;
   pm: string;

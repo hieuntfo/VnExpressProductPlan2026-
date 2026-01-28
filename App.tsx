@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { DEPARTMENTS, MOCK_PROJECTS, GOOGLE_SCRIPT_URL, MEMBERS_DATA_URL, DOCUMENTS_DATA_URL } from './constants';
-import { Project, ProjectStatus, ProjectType, Member, MemberWithStats, Document } from './types';
+import { Project, ProjectStatus, ProjectType, ProjectPriority, Member, MemberWithStats, Document } from './types';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import ProjectTable from './components/ProjectTable';
@@ -237,6 +237,7 @@ const App: React.FC = () => {
   const [filterPM, setFilterPM] = useState<string>('All');
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [filterQuarter, setFilterQuarter] = useState<string>('All');
+  const [filterPriority, setFilterPriority] = useState<string>('All');
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedMember, setSelectedMember] = useState<MemberWithStats | null>(null);
@@ -258,6 +259,7 @@ const App: React.FC = () => {
     type: ProjectType.NEW,
     status: ProjectStatus.PLANNING,
     phase: 'Initialization',
+    priority: ProjectPriority.MEDIUM,
     quarter: 1,
     department: DEPARTMENTS[0],
     pm: '',
@@ -418,6 +420,15 @@ const App: React.FC = () => {
     return 1;
   };
 
+  const normalizePriority = (pStr: string): ProjectPriority => {
+    const p = (pStr || '').toLowerCase().trim();
+    if (p.includes('highest') || p.includes('p0') || p.includes('cao nhất')) return ProjectPriority.HIGHEST;
+    if (p.includes('high') || p.includes('p1') || p.includes('cao')) return ProjectPriority.HIGH;
+    if (p.includes('medium') || p.includes('p2') || p.includes('trung bình')) return ProjectPriority.MEDIUM;
+    if (p.includes('low') || p.includes('p3') || p.includes('thấp')) return ProjectPriority.LOW;
+    return ProjectPriority.NONE;
+  };
+
   const getNextProjectCode = useCallback(() => {
     if (!projects || projects.length === 0) return "1";
     const maxCode = projects.reduce((max, p) => {
@@ -516,6 +527,7 @@ const App: React.FC = () => {
              if (c.includes('giai đoạn') || c.includes('phase')) colMap['phase'] = idx;
              if (c.includes('bộ phận') || c.includes('dept') || c.includes('folder')) colMap['department'] = idx;
              if (c.includes('yêu cầu') || c.includes('owner') || c.includes('request') || c.includes('người yêu cầu')) colMap['po'] = idx;
+             if (c.includes('ưu tiên') || c.includes('priority')) colMap['priority'] = idx;
              if (c.includes('tech') || c.includes('handoff') || c.includes('bàn giao')) colMap['techHandoff'] = idx;
              if (c.includes('release') || c.includes('golive') || c.includes('ngày') || c.includes('date')) colMap['releaseDate'] = idx;
              if (c.includes('quý') || c.includes('quarter')) colMap['quarter'] = idx;
@@ -529,10 +541,10 @@ const App: React.FC = () => {
       }
 
       if (headerRowIndex === -1) {
-         colMap['code'] = 0; colMap['type'] = 1; colMap['description'] = 2; colMap['phase'] = 3;
-         colMap['department'] = 4; colMap['po'] = 5; colMap['techHandoff'] = 6; colMap['releaseDate'] = 9;
-         colMap['quarter'] = 10; colMap['pm'] = 12; colMap['designer'] = 13; colMap['status'] = 14;
-         colMap['kpi'] = 18; headerRowIndex = 0;
+         // Fallback based on user report of adding a new column E (priority)
+         colMap['code'] = 0; colMap['type'] = 1; colMap['description'] = 2; colMap['phase'] = 3; colMap['priority'] = 4;
+         colMap['department'] = 5; colMap['po'] = 6; colMap['techHandoff'] = 7; colMap['releaseDate'] = 10;
+         colMap['quarter'] = 11; colMap['pm'] = 13; colMap['designer'] = 14; colMap['status'] = 15; colMap['kpi'] = 19; headerRowIndex = 0;
       }
       
       if (colMap['description'] === undefined) colMap['description'] = 2; 
@@ -545,13 +557,13 @@ const App: React.FC = () => {
           const releaseDate = getVal('releaseDate');
           const techHandoff = getVal('techHandoff');
           const quarterStr = getVal('quarter');
-          const statusValue = (row[14] || '').trim();
+          const statusValue = getVal('status');
           let year = 2026; 
           const dateStr = (releaseDate + techHandoff + quarterStr).toUpperCase();
           if (dateStr.includes('/25') || dateStr.includes('2025') || quarterStr.includes('25')) year = 2025;
           else if (dateStr.includes('/24') || dateStr.includes('2024')) year = 2024;
           return {
-            id: `p-${idx}`, code: getVal('code') || `${idx + 1}`, year, description: getVal('description') || 'Untitled Project',
+            id: `p-${idx}`, code: getVal('code') || `${idx + 1}`, year, description: getVal('description') || 'Untitled Project', priority: normalizePriority(getVal('priority')),
             type: normalizeType(getVal('type')), department: getVal('department') || 'General', status: normalizeStatus(statusValue),
             phase: getVal('phase'), quarter: parseQuarter(quarterStr), techHandoff, releaseDate, pm: getVal('pm'),
             designer: getVal('designer'), po: getVal('po'), kpi: getVal('kpi'), 
@@ -628,10 +640,11 @@ const App: React.FC = () => {
       if (filterType !== 'All' && p.type !== filterType) return false;
       if (filterPM !== 'All' && p.pm !== filterPM) return false;
       if (filterStatus !== 'All' && p.status !== filterStatus) return false;
+      if (filterPriority !== 'All' && p.priority !== filterPriority) return false;
       if (filterQuarter !== 'All' && p.quarter !== parseInt(filterQuarter)) return false;
       return true;
     });
-  }, [projects, selectedYear, searchQuery, filterDept, filterType, filterPM, filterStatus, filterQuarter]);
+  }, [projects, selectedYear, searchQuery, filterDept, filterType, filterPM, filterStatus, filterPriority, filterQuarter]);
 
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -767,7 +780,7 @@ const App: React.FC = () => {
   };
 
   const resetFilters = () => {
-    setFilterDept('All'); setFilterType('All'); setFilterPM('All'); setFilterStatus('All'); setFilterQuarter('All'); setSearchQuery('');
+    setFilterDept('All'); setFilterType('All'); setFilterPM('All'); setFilterStatus('All'); setFilterQuarter('All'); setFilterPriority('All'); setSearchQuery('');
   };
 
   if (!isAuthenticated) {
@@ -975,33 +988,27 @@ const App: React.FC = () => {
                         <input type="text" placeholder="Search projects, PM, Department..." className="w-full pl-12 pr-4 py-4 bg-slate-100/50 dark:bg-slate-800/60 border border-slate-300/80 dark:border-slate-700/40 rounded-2xl text-sm outline-none shadow-inner focus:ring-2 focus:ring-vne-primary focus:border-vne-primary text-slate-900 dark:text-white placeholder-slate-400 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                         <svg className="w-5 h-5 absolute left-4 top-4 text-slate-400 group-focus-within:text-vne-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         
-                        {(searchQuery || filterDept !== 'All' || filterPM !== 'All' || filterStatus !== 'All' || filterType !== 'All' || filterQuarter !== 'All') && (
+                        {(searchQuery || filterDept !== 'All' || filterPM !== 'All' || filterStatus !== 'All' || filterType !== 'All' || filterQuarter !== 'All' || filterPriority !== 'All') && (
                           <button onClick={resetFilters} className="absolute right-4 top-3 text-[10px] font-bold text-vne-primary hover:text-white uppercase tracking-wider bg-vne-primary/10 hover:bg-vne-primary px-3 py-1.5 rounded-lg transition-all">Clear Filters</button>
                         )}
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                        {[
                          { label: 'Department', val: filterDept, set: setFilterDept, opts: uniqueDepts, all: 'All Departments' },
                          { label: 'Type', val: filterType, set: setFilterType, opts: Object.values(ProjectType), all: 'All Types' },
                          { label: 'PM', val: filterPM, set: setFilterPM, opts: uniquePMs, all: 'All PMs' },
                          { label: 'Status', val: filterStatus, set: setFilterStatus, opts: Object.values(ProjectStatus), all: 'All Statuses' },
+                         { label: 'Quarter', val: filterQuarter, set: setFilterQuarter, opts: [1,2,3,4], all: 'All Quarters' },
+                         { label: 'Priority', val: filterPriority, set: setFilterPriority, opts: Object.values(ProjectPriority).filter(p => p !== ProjectPriority.NONE), all: 'All Priorities' },
                        ].map((f, i) => (
                         <div key={i} className="flex flex-col gap-1.5 group">
                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">{f.label}</label>
                           <select value={f.val} onChange={(e) => f.set(e.target.value)} className="bg-slate-100/50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-300/80 dark:border-slate-700/40 rounded-xl px-3 py-3 outline-none focus:border-vne-primary focus:ring-1 focus:ring-vne-primary transition-all cursor-pointer shadow-sm">
-                            <option value="All">{f.all}</option>
-                            {f.opts.map((o: string) => <option key={o} value={o}>{o}</option>)}
+                            <option value="All">{f.all}</option>{f.opts.map((o: any) => <option key={o} value={o}>{f.label === 'Quarter' ? `Quarter ${o}` : o}</option>)}
                           </select>
                        </div>
                        ))}
-                       <div className="flex flex-col gap-1.5 group">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Quarter</label>
-                          <select value={filterQuarter} onChange={(e) => setFilterQuarter(e.target.value)} className="bg-slate-100/50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-300/80 dark:border-slate-700/40 rounded-xl px-3 py-3 outline-none focus:border-vne-primary focus:ring-1 focus:ring-vne-primary transition-all cursor-pointer shadow-sm">
-                            <option value="All">All Quarters</option>
-                            {[1,2,3,4].map(q => <option key={q} value={q}>Quarter {q}</option>)}
-                          </select>
-                       </div>
                     </div>
                  </div>
 
@@ -1088,6 +1095,26 @@ const App: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-2">
+                {selectedProject.priority !== ProjectPriority.NONE && (
+                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider whitespace-nowrap 
+                    ${{
+                        [ProjectPriority.HIGHEST]: 'text-rose-600 bg-rose-100 border-rose-200 dark:text-rose-300 dark:bg-rose-500/10 dark:border-rose-500/20',
+                        [ProjectPriority.HIGH]: 'text-amber-600 bg-amber-100 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/20',
+                        [ProjectPriority.MEDIUM]: 'text-sky-600 bg-sky-100 border-sky-200 dark:text-sky-300 dark:bg-sky-500/10 dark:border-sky-500/20',
+                        [ProjectPriority.LOW]: 'text-slate-500 bg-slate-100 border-slate-200 dark:text-slate-400 dark:bg-slate-500/10 dark:border-slate-500/20',
+                        [ProjectPriority.NONE]: 'hidden'
+                    }[selectedProject.priority]
+                    }`}>
+                        P{
+                            {
+                                [ProjectPriority.HIGHEST]: 0,
+                                [ProjectPriority.HIGH]: 1,
+                                [ProjectPriority.MEDIUM]: 2,
+                                [ProjectPriority.LOW]: 3,
+                            }[selectedProject.priority]
+                        } - {selectedProject.priority}
+                    </div>
+                )}
                 {isAdmin && !isEditing && (
                   <button onClick={() => { setIsEditing(true); setEditFormData({ status: selectedProject.status, releaseDate: selectedProject.releaseDate, kpi: selectedProject.kpi }); }} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 rounded-xl transition-all font-bold text-xs uppercase flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -1131,17 +1158,31 @@ const App: React.FC = () => {
                  </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="space-y-6">
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Project No.</p>
-                        <p className="font-mono text-base font-bold text-slate-800 dark:text-white">#{selectedProject.code}</p>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Project No.</p>
+                      <p className="font-mono text-base font-bold text-slate-800 dark:text-white">#{selectedProject.code}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Personnel</p>
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-slate-500 dark:text-slate-300">PM: <span className="text-slate-800 dark:text-white">{selectedProject.pm || 'N/A'}</span></p>
+                        <p className="text-sm font-bold text-slate-500 dark:text-slate-300">PO: <span className="text-slate-800 dark:text-white">{selectedProject.po || 'N/A'}</span></p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Designer: <span className="text-slate-700 dark:text-slate-300">{selectedProject.designer || 'N/A'}</span></p>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Type</p>
-                        <p className="text-base font-black text-slate-800 dark:text-white">{selectedProject.type}</p>
-                      </div>
-                      <div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Type</p>
+                      <p className="text-base font-black text-slate-800 dark:text-white">{selectedProject.type}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Release Timeline</p>
+                      <p className="text-sm font-black text-emerald-500 dark:text-emerald-400">{selectedProject.releaseDate || 'TBA'}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Tech HO: {selectedProject.techHandoff || 'N/A'}</p>
+                      <p className="text-xs text-slate-500">Quarter: Q{selectedProject.quarter}</p>
+                    </div>
+                    <div className="col-span-2 grid grid-cols-2 gap-8 pt-4 border-t border-slate-200 dark:border-slate-800">
+                       <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Status</p>
                         <p className="text-base font-black text-vne-primary drop-shadow-[0_0_5px_var(--vne-glow)]">{selectedProject.status}</p>
                       </div>
@@ -1149,26 +1190,10 @@ const App: React.FC = () => {
                         <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Phase</p>
                         <p className="text-sm font-bold text-slate-600 dark:text-slate-200">{selectedProject.phase || 'N/A'}</p>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">KPI / Goals</p>
-                        <p className="text-sm font-bold text-slate-600 dark:text-slate-200">{selectedProject.kpi || 'Not set'}</p>
-                      </div>
                     </div>
-                    <div className="space-y-6">
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Personnel</p>
-                        <div className="space-y-2">
-                          <p className="text-sm font-bold text-slate-500 dark:text-slate-300">PM: <span className="text-slate-800 dark:text-white">{selectedProject.pm}</span></p>
-                          <p className="text-sm font-bold text-slate-500 dark:text-slate-300">PO: <span className="text-slate-800 dark:text-white">{selectedProject.po}</span></p>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">Designer: <span className="text-slate-700 dark:text-slate-300">{selectedProject.designer}</span></p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Release Timeline</p>
-                        <p className="text-sm font-black text-emerald-500 dark:text-emerald-400">{selectedProject.releaseDate || 'TBA'}</p>
-                        <p className="text-xs text-slate-500 mt-1">Tech HO: {selectedProject.techHandoff}</p>
-                        <p className="text-xs text-slate-500">Quarter: Q{selectedProject.quarter}</p>
-                      </div>
+                    <div className="col-span-2">
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">KPI / Goals</p>
+                      <p className="text-base font-bold text-slate-600 dark:text-slate-200">{selectedProject.kpi || 'Not set'}</p>
                     </div>
                   </div>
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-600 dark:text-slate-300 leading-relaxed shadow-inner">
@@ -1215,7 +1240,7 @@ const App: React.FC = () => {
                         const url = prompt('Enter the URL:');
                         if (url) window.document.execCommand('createLink', false, url);
                     }} className="w-8 h-8 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors">
-                      <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                      <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                     </button>
                   </div>
                   <div
