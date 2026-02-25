@@ -348,7 +348,7 @@ const App: React.FC = () => {
         sessionStorage.setItem(SESSION_KEY_USER_NAME, adminName);
         logAccess(adminName);
       } else {
-        setLoginError('Mật khẩu Admin không đúng');
+        setLoginError('Mật khẩu Admin không đúng (Gợi ý: vnexpress)');
       }
     }
   };
